@@ -1,0 +1,16 @@
+# Specifies intentionally untracked files to ignore when using Git
+# http://git-scm.com/docs/gitignore
+*~
+*.zip
+aws_pyodbc_layer/python
+aws_pyodbc_layer/*.zip
+docker-pyodbc-layer-v1/python
+docker-pyodbc-layer-v1/*.zip
+docker-pyodbc-layer-v2/python
+docker-pyodbc-layer-v2/*.zip
+prcss_export_rds_to_s3/venv
+prcss_import_s3_to_rds/venv
+proof_concept_event_bridge/package
+proof_concept_event_bridge/*.zip
+sqlserver-layer_environment/*
+.DS_Store
