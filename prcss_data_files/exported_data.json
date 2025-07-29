@@ -1,0 +1,602 @@
+[
+  {
+    "ICDId": 40180388,
+    "SpanishDescription": "ZyCov-D"
+  },
+  {
+    "ICDId": 40179864,
+    "SpanishDescription": "zuclopentixol"
+  },
+  {
+    "ICDId": 40180499,
+    "SpanishDescription": "Zucapsaicina"
+  },
+  {
+    "ICDId": 40181539,
+    "SpanishDescription": "Zoxazolamina"
+  },
+  {
+    "ICDId": 40189740,
+    "SpanishDescription": "Zovant"
+  },
+  {
+    "ICDId": 40180155,
+    "SpanishDescription": "Zotepina"
+  },
+  {
+    "ICDId": 40179195,
+    "SpanishDescription": "Zoster, vive atenuado"
+  },
+  {
+    "ICDId": 12747,
+    "SpanishDescription": "Z\u00f3ster, no especificado"
+  },
+  {
+    "ICDId": 13242,
+    "SpanishDescription": "Z\u00f3ster sin complicaciones"
+  },
+  {
+    "ICDId": 13941,
+    "SpanishDescription": "z\u00f3ster oft\u00e1lmico"
+  },
+  {
+    "ICDId": 12064,
+    "SpanishDescription": "Z\u00f3ster diseminado"
+  },
+  {
+    "ICDId": 14324,
+    "SpanishDescription": "Zoster con otras complicaciones especificadas"
+  },
+  {
+    "ICDId": 13488,
+    "SpanishDescription": "Zoster con afectaci\u00f3n del sistema nervioso central"
+  },
+  {
+    "ICDId": 9349,
+    "SpanishDescription": "Z\u00f3ster"
+  },
+  {
+    "ICDId": 40190616,
+    "SpanishDescription": "zorubicina"
+  },
+  {
+    "ICDId": 40190182,
+    "SpanishDescription": "Zopiclona"
+  },
+  {
+    "ICDId": 40178833,
+    "SpanishDescription": "Zonisamida"
+  },
+  {
+    "ICDId": 40183192,
+    "SpanishDescription": "zona suprap\u00fabica"
+  },
+  {
+    "ICDId": 40176920,
+    "SpanishDescription": "Zona o instalaci\u00f3n de transporte p\u00fablico"
+  },
+  {
+    "ICDId": 40177357,
+    "SpanishDescription": "Zona industrial o de construcci\u00f3n"
+  },
+  {
+    "ICDId": 40177271,
+    "SpanishDescription": "Zona deportiva y de atletismo"
+  },
+  {
+    "ICDId": 40184582,
+    "SpanishDescription": "Zona de uni\u00f3n de la lengua"
+  },
+  {
+    "ICDId": 40177022,
+    "SpanishDescription": "Zona de transporte distinta de autopista, calle o carretera"
+  },
+  {
+    "ICDId": 40185799,
+    "SpanishDescription": "Zona de esqu\u00ed o snowboard"
+  },
+  {
+    "ICDId": 40184106,
+    "SpanishDescription": "zona de brodmann"
+  },
+  {
+    "ICDId": 40176487,
+    "SpanishDescription": "Zona de aguas tranquilas"
+  },
+  {
+    "ICDId": 40184569,
+    "SpanishDescription": "zona cloacog\u00e9nica"
+  },
+  {
+    "ICDId": 40190380,
+    "SpanishDescription": "Zomepirac"
+  },
+  {
+    "ICDId": 40181558,
+    "SpanishDescription": "zolpidem"
+  },
+  {
+    "ICDId": 40178595,
+    "SpanishDescription": "Zolmitript\u00e1n"
+  },
+  {
+    "ICDId": 40182221,
+    "SpanishDescription": "zolimidina"
+  },
+  {
+    "ICDId": 40190574,
+    "SpanishDescription": "zofenopril"
+  },
+  {
+    "ICDId": 40181892,
+    "SpanishDescription": "Ziprasidona"
+  },
+  {
+    "ICDId": 40182157,
+    "SpanishDescription": "Zipeprol"
+  },
+  {
+    "ICDId": 40187459,
+    "SpanishDescription": "zinostatina"
+  },
+  {
+    "ICDId": 40188271,
+    "SpanishDescription": "zineb"
+  },
+  {
+    "ICDId": 40187636,
+    "SpanishDescription": "Zinc"
+  },
+  {
+    "ICDId": 40181084,
+    "SpanishDescription": "Zimeldine"
+  },
+  {
+    "ICDId": 40187226,
+    "SpanishDescription": "Zidovudina, Lamivudina y Nevirapina"
+  },
+  {
+    "ICDId": 40179437,
+    "SpanishDescription": "Zidovudina, Lamivudina y Abacavir"
+  },
+  {
+    "ICDId": 40189204,
+    "SpanishDescription": "Zidovudina y Lamivudina"
+  },
+  {
+    "ICDId": 40182059,
+    "SpanishDescription": "Zidovudina"
+  },
+  {
+    "ICDId": 40189231,
+    "SpanishDescription": "Ziconotida"
+  },
+  {
+    "ICDId": 40188859,
+    "SpanishDescription": "zeranol"
+  },
+  {
+    "ICDId": 40180148,
+    "SpanishDescription": "Zearalenona"
+  },
+  {
+    "ICDId": 40185055,
+    "SpanishDescription": "Zapato, sandalia, zapatilla, bota"
+  },
+  {
+    "ICDId": 40176767,
+    "SpanishDescription": "Zanja, zanja, pozo"
+  },
+  {
+    "ICDId": 40187143,
+    "SpanishDescription": "zanamivir"
+  },
+  {
+    "ICDId": 40187252,
+    "SpanishDescription": "zalepl\u00f3n"
+  },
+  {
+    "ICDId": 40181513,
+    "SpanishDescription": "Zalcitabina"
+  },
+  {
+    "ICDId": 40190477,
+    "SpanishDescription": "Zafirlukast"
+  },
+  {
+    "ICDId": 40187016,
+    "SpanishDescription": "Zactano"
+  },
+  {
+    "ICDId": 40183854,
+    "SpanishDescription": "Yunque"
+  },
+  {
+    "ICDId": 40180043,
+    "SpanishDescription": "yoxalato"
+  },
+  {
+    "ICDId": 40180351,
+    "SpanishDescription": "Yopodato de sodio"
+  },
+  {
+    "ICDId": 40181055,
+    "SpanishDescription": "Yopodato de calcio"
+  },
+  {
+    "ICDId": 40179030,
+    "SpanishDescription": "yopidol"
+  },
+  {
+    "ICDId": 40180354,
+    "SpanishDescription": "Yohimbina"
+  },
+  {
+    "ICDId": 40179899,
+    "SpanishDescription": "yohexol"
+  },
+  {
+    "ICDId": 40187395,
+    "SpanishDescription": "yoduro de tridihexetilo"
+  },
+  {
+    "ICDId": 40179497,
+    "SpanishDescription": "yoduro de tiemonio"
+  },
+  {
+    "ICDId": 40188620,
+    "SpanishDescription": "yoduro de tibezonio"
+  },
+  {
+    "ICDId": 40181036,
+    "SpanishDescription": "Yoduro de sodio I-131 terap\u00e9utico"
+  },
+  {
+    "ICDId": 40179532,
+    "SpanishDescription": "yoduro de sodio (131i)"
+  },
+  {
+    "ICDId": 40179706,
+    "SpanishDescription": "Yoduro de sodio (124I)"
+  },
+  {
+    "ICDId": 40187406,
+    "SpanishDescription": "Yoduro de sodio (123I)"
+  },
+  {
+    "ICDId": 40190086,
+    "SpanishDescription": "yoduro de sodio"
+  },
+  {
+    "ICDId": 40181365,
+    "SpanishDescription": "Yoduro de pralidoxima"
+  },
+  {
+    "ICDId": 40179766,
+    "SpanishDescription": "Yoduro de potasio (expectorante)"
+  },
+  {
+    "ICDId": 40178943,
+    "SpanishDescription": "Yoduro de potasio"
+  },
+  {
+    "ICDId": 40180156,
+    "SpanishDescription": "yoduro de plomo"
+  },
+  {
+    "ICDId": 40180722,
+    "SpanishDescription": "yoduro de oxapio"
+  },
+  {
+    "ICDId": 40189703,
+    "SpanishDescription": "yoduro de metilo"
+  },
+  {
+    "ICDId": 40190104,
+    "SpanishDescription": "Yoduro de mercurio (ung\u00fcento)"
+  },
+  {
+    "ICDId": 40187181,
+    "SpanishDescription": "yoduro de mercurio"
+  },
+  {
+    "ICDId": 40180257,
+    "SpanishDescription": "Yoduro de isopropamida"
+  },
+  {
+    "ICDId": 40181867,
+    "SpanishDescription": "yoduro de hexasonio"
+  },
+  {
+    "ICDId": 40181677,
+    "SpanishDescription": "yoduro de enisamio"
+  },
+  {
+    "ICDId": 40189790,
+    "SpanishDescription": "Yoduro de ecotiopato"
+  },
+  {
+    "ICDId": 40190103,
+    "SpanishDescription": "Yoduro de ditiazanina"
+  },
+  {
+    "ICDId": 40190523,
+    "SpanishDescription": "yoduro de calcio"
+  },
+  {
+    "ICDId": 40179580,
+    "SpanishDescription": "Yoduro de (2-bencidriloxietil)dietil-metilamonio"
+  },
+  {
+    "ICDId": 40178607,
+    "SpanishDescription": "Yoduro"
+  },
+  {
+    "ICDId": 40189971,
+    "SpanishDescription": "Yodoquinol"
+  },
+  {
+    "ICDId": 40187214,
+    "SpanishDescription": "Yodohipurato de sodio (131I)"
+  },
+  {
+    "ICDId": 40190352,
+    "SpanishDescription": "Yodohipurato de sodio (123I)"
+  },
+  {
+    "ICDId": 40188493,
+    "SpanishDescription": "Yodoheparinato"
+  },
+  {
+    "ICDId": 40181809,
+    "SpanishDescription": "Yodoftalina s\u00f3dica"
+  },
+  {
+    "ICDId": 40188415,
+    "SpanishDescription": "yodoformo"
+  },
+  {
+    "ICDId": 40180227,
+    "SpanishDescription": "Yodocolesterol (131I)"
+  },
+  {
+    "ICDId": 40189517,
+    "SpanishDescription": "Yodoclorhidroxiquina t\u00f3pica"
+  },
+  {
+    "ICDId": 40189639,
+    "SpanishDescription": "yodobismitol"
+  },
+  {
+    "ICDId": 40188485,
+    "SpanishDescription": "Yodoacetato de etilo"
+  },
+  {
+    "ICDId": 40189536,
+    "SpanishDescription": "Yodo para afecciones de la tiroides (antitiroideo)"
+  },
+  {
+    "ICDId": 40179037,
+    "SpanishDescription": "Yodo ferroso"
+  },
+  {
+    "ICDId": 40190016,
+    "SpanishDescription": "Yodo 131 terap\u00e9utico"
+  },
+  {
+    "ICDId": 40190334,
+    "SpanishDescription": "Yodo 131"
+  },
+  {
+    "ICDId": 40179602,
+    "SpanishDescription": "Yodo 125"
+  },
+  {
+    "ICDId": 40174485,
+    "SpanishDescription": "Yodo (antis\u00e9ptico)"
+  },
+  {
+    "ICDId": 40189828,
+    "SpanishDescription": "Yodo (131I) omburtamab"
+  },
+  {
+    "ICDId": 40181788,
+    "SpanishDescription": "Yodixanol"
+  },
+  {
+    "ICDId": 40189121,
+    "SpanishDescription": "Yodipamida"
+  },
+  {
+    "ICDId": 40180456,
+    "SpanishDescription": "yodato de potasio"
+  },
+  {
+    "ICDId": 40189302,
+    "SpanishDescription": "Yodamida"
+  },
+  {
+    "ICDId": 40184585,
+    "SpanishDescription": "Yeyuno"
+  },
+  {
+    "ICDId": 40182435,
+    "SpanishDescription": "Yeso microsporum"
+  },
+  {
+    "ICDId": 40181984,
+    "SpanishDescription": "Yeso de diaquil\u00f3n"
+  },
+  {
+    "ICDId": 916,
+    "SpanishDescription": "Yersiniosis extraintestinal"
+  },
+  {
+    "ICDId": 40191007,
+    "SpanishDescription": "Yersinia pestis"
+  },
+  {
+    "ICDId": 40191114,
+    "SpanishDescription": "Yersinia enterocol\u00edtica"
+  },
+  {
+    "ICDId": 40182530,
+    "SpanishDescription": "yersinia"
+  },
+  {
+    "ICDId": 40184134,
+    "SpanishDescription": "yema del pulgar"
+  },
+  {
+    "ICDId": 40183941,
+    "SpanishDescription": "yema del dedo me\u00f1ique"
+  },
+  {
+    "ICDId": 40185345,
+    "SpanishDescription": "Yate a motor, lancha a motor, barco a motor, moto acu\u00e1tica personal"
+  },
+  {
+    "ICDId": 40177893,
+    "SpanishDescription": "y linfomas de c\u00e9lulas NK"
+  },
+  {
+    "ICDId": 40179678,
+    "SpanishDescription": "y agonistas de los receptores beta-adren\u00e9rgicos"
+  },
+  {
+    "ICDId": 40188790,
+    "SpanishDescription": "xipamida"
+  },
+  {
+    "ICDId": 40179527,
+    "SpanishDescription": "Ximelagatran"
+  },
+  {
+    "ICDId": 40181845,
+    "SpanishDescription": "xilometazolina"
+  },
+  {
+    "ICDId": 40189042,
+    "SpanishDescription": "Xiloca\u00edna t\u00f3pica"
+  },
+  {
+    "ICDId": 40180562,
+    "SpanishDescription": "Xiloca\u00edna espinal"
+  },
+  {
+    "ICDId": 40187079,
+    "SpanishDescription": "xileno"
+  },
+  {
+    "ICDId": 40181748,
+    "SpanishDescription": "Xigris"
+  },
+  {
+    "ICDId": 40175006,
+    "SpanishDescription": "xifoides"
+  },
+  {
+    "ICDId": 40189609,
+    "SpanishDescription": "Xibornol"
+  },
+  {
+    "ICDId": 3776,
+    "SpanishDescription": "Xerostom\u00eda"
+  },
+  {
+    "ICDId": 16258,
+    "SpanishDescription": "Xerosis cutis o asteatosis"
+  },
+  {
+    "ICDId": 5733,
+    "SpanishDescription": "Xeroderma pigmentoso"
+  },
+  {
+    "ICDId": 40180915,
+    "SpanishDescription": "Xen\u00f3n (133xe)"
+  },
+  {
+    "ICDId": 40181871,
+    "SpanishDescription": "Xen\u00f3n"
+  },
+  {
+    "ICDId": 40187741,
+    "SpanishDescription": "Xenisalato"
+  },
+  {
+    "ICDId": 40191021,
+    "SpanishDescription": "XBB.1.5"
+  },
+  {
+    "ICDId": 40190932,
+    "SpanishDescription": "XBB"
+  },
+  {
+    "ICDId": 7511,
+    "SpanishDescription": "Xantomas cut\u00e1neos y subcut\u00e1neos de tipo no especificado"
+  },
+  {
+    "ICDId": 3328,
+    "SpanishDescription": "Xantomas cut\u00e1neos y subcut\u00e1neos"
+  },
+  {
+    "ICDId": 7792,
+    "SpanishDescription": "xantoma tuberoso"
+  },
+  {
+    "ICDId": 8301,
+    "SpanishDescription": "Xantoma tendinoso"
+  },
+  {
+    "ICDId": 8867,
+    "SpanishDescription": "Xantoma plano"
+  },
+  {
+    "ICDId": 9159,
+    "SpanishDescription": "Xantoma eruptivo"
+  },
+  {
+    "ICDId": 8839,
+    "SpanishDescription": "Xantoma debido a un trastorno espec\u00edfico del metabolismo de los l\u00edpidos"
+  },
+  {
+    "ICDId": 2851,
+    "SpanishDescription": "Xantogranuloma juvenil"
+  },
+  {
+    "ICDId": 40188379,
+    "SpanishDescription": "xantocilina"
+  },
+  {
+    "ICDId": 40186733,
+    "SpanishDescription": "Xantoastrocitoma pleom\u00f3rfico anapl\u00e1sico"
+  },
+  {
+    "ICDId": 40178420,
+    "SpanishDescription": "Xantoastrocitoma pleom\u00f3rfico"
+  },
+  {
+    "ICDId": 14703,
+    "SpanishDescription": "Xantinuria"
+  },
+  {
+    "ICDId": 12165,
+    "SpanishDescription": "Xantelasma del p\u00e1rpado"
+  },
+  {
+    "ICDId": 40188531,
+    "SpanishDescription": "xamoterol"
+  },
+  {
+    "ICDId": 40180152,
+    "SpanishDescription": "Xaliproden"
+  },
+  {
+    "ICDId": 40182487,
+    "SpanishDescription": "Wuchereria bancrofti"
+  },
+  {
+    "ICDId": 40190739,
+    "SpanishDescription": "Wucherer\u00eda"
+  }
+]
