@@ -20,10 +20,30 @@ ACCEPT_EULA=Y brew install msodbcsql17
 odbcinst -q -d -n "ODBC Driver 17 for SQL Server"
 
 
-2. onfigurar credenciales de AWS
+2. Configurar credenciales de AWS
 
+# 2.1 Validar version aws cli
+aws --version
+
+# 2.2 Si no encuentra aws cli
+brew install awscli
+
+# 2.3 Configurar las credenciales
+aws configure
+
+# Te pedirá la siguiente información:
+# AWS Access Key ID: Tu clave de acceso de AWS
+# AWS Secret Access Key: Tu clave secreta
+# Default region name: La región AWS que prefieras (us-east-1, eu-west-1, etc...)
+# Default output format: El formato de salida (json, text, table)
+
+# 2.4 Verificar la configuración
+aws sts get-caller-identity
+
+# 2.5 Configurar variables de entorno (Opcional)
 export AWS_ACCESS_KEY_ID=TU_ACCESS_KEY
 export AWS_SECRET_ACCESS_KEY=TU_SECRET_KEY
+export AWS_DEFAULT_REGION=us-east-1
 
 
 
@@ -83,43 +103,19 @@ python import_s3_to_rds.py
 
 
 
-####  Proof Concept EventBridge  ###
-1. Empaquetar dependencias y subir como capa:
-
-cd proof_concept_event_bridge
-
-pip3 install --target ./package boto3
-
-pip3 install --target ./package pyodbc boto3
-
-2. Cree un paquete de implementación con las bibliotecas instaladas.
-
-cd package
-
-zip -r ../lambda-sql-to-s3-package.zip .
-
-cd ..
-
-4. Agregue el archivo export_to_s3_with_aws_eb.py a la raíz del archivo zip.
-
-zip lambda-sql-to-s3-package.zip export_to_s3_with_aws_eb.py
-
-5. El archivo ZIP es el que se va a cargar en AWS Lambda
-
-###  End Proof Concept EventBridge  ###
-
-
-
 ####  AWS Lambda layer pyodbc  ###
 1. Empaquetar dependencias y subir como capa:
-# mkdir -p aws_pyodbc_layer/python/lib/python3.11/site-packages
+# Consola Linux
+mkdir -p aws_pyodbc_layer/python/lib/python3.11/site-packages
 
+# Con Dockerfile
 mkdir aws_pyodbc_layer
 
 cd aws_pyodbc_layer
 
+### Init Consola Linux ###
 # 1.1 Instalar dependencias en la ubicación correcta
-# pip3 install --target ./python/lib/python3.11/site-packages pyodbc boto3
+pip3 install --target ./python/lib/python3.11/site-packages pyodbc boto3
 
 # 1.2 Descargar e incluir las dependencias nativas de ODBC
 # Necesitarás Docker para este paso
@@ -140,27 +136,42 @@ docker run -v $(pwd):/output -it amazonlinux:2 bash -c \
 
 # 1.3 Empaquetar
 zip -r pyodbc-layer-aws.zip python
+### End Consola Linux ###
 
+### Init Dockerfile ###
 # 1.1 Construye la imagen Docker
 
 docker build -t lambda-pyodbc-builder .
 
-# 1.2 Ejecuta el contenedor para crear la capa:
+# Extract the layer (using Method 1)
+# docker run --rm -v $(pwd):/output -it lambda-pyodbc-builder bash -c "cp /pyodbc-layer.zip /output/"
 
-docker run -v $(pwd):/output -it lambda-pyodbc-builder bash -c \
-    "mkdir -p python/lib/python3.11/site-packages && \
-    /usr/local/bin/pip3.11 install --target python/lib/python3.11/site-packages pyodbc==4.0.39 && \
-    cp /usr/lib64/libltdl.so.7 python/ && \
-    cp /usr/lib64/libodbc.so.2 python/ && \
-    cp /usr/lib64/libodbcinst.so.2 python/ && \
-    zip -r /output/pyodbc-layer.zip python"
+# 1.2 Create a temporary container
+docker create --name temp lambda-pyodbc-builder
+
+# 1.3 Copy the zip file from the container
+docker cp temp:pyodbc-layer.zip .
+
+docker rm temp
+
+unzip -l pyodbc-layer.zip
+
+unzip -l pyodbc-layer.zip | grep pyodbc.cpython
+
+### End Dockerfile ###
 
 # 1.4 Publicar la nueva versión de la capa
 
 aws lambda publish-layer-version \
     --layer-name pyodbc-layer \
-    --zip-file fileb://pyodbc-layer-aws.zip \
+    --zip-file fileb://pyodbc-layer.zip \
     --compatible-runtimes python3.11
+
+# 1.5 Lambda Configuration add:
+
+LD_LIBRARY_PATH=/opt/python:/opt/lib
+ODBCSYSINI=/opt
+ODBCINI=/opt/odbc.ini
 
 # NOTA: Si no funciona, optar por solucion Alternativa
 
@@ -169,9 +180,6 @@ aws lambda publish-layer-version \
 aws iam list-attached-user-policies --user-name marco.tlachino@plmlatina.com
 
 arn:aws:lambda:us-east-1:225733257624:layer:pyodbc:1
-
-arn:aws:lambda:us-east-1:225733257624:layer:testLayer:1
-
 
 ###  End AWS Lambda layer pyodbc  ###
 

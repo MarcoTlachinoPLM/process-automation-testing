@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda function with pyodbc layer for SQL Server to S3 exports
+
+Resources:
+  PyodbcLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: pyodbc-sqlserver-layer
+      ContentUri: pyodbc_layer/pyodbc-layer.zip
+      CompatibleRuntimes:
+        - python3.11
+      LicenseInfo: MIT
+      RetentionPolicy: Retain
+
+  ExportFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: sqlserver-to-s3-export
+      CodeUri: lambda_function/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.11
+      Timeout: 30
+      MemorySize: 512
+      Layers:
+        - !Ref PyodbcLayer
+      Environment:
+        Variables:
+          RDS_ENDPOINT: !Ref RDSEndpoint
+          RDS_DATABASE: !Ref RDSDatabase
+          RDS_USERNAME: !Ref RDSUsername
+          RDS_PASSWORD: !Ref RDSPassword
+          S3_BUCKET: !Ref S3BucketName
+          S3_KEY: !Ref S3KeyPrefix
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+              Resource: !Sub "arn:aws:s3:::${S3BucketName}/${S3KeyPrefix}/*"
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: "*"
+
+Parameters:
+  RDSEndpoint:
+    Type: String
+    Description: RDS SQL Server endpoint
+  RDSDatabase:
+    Type: String
+    Description: Database name
+  RDSUsername:
+    Type: String
+    Description: Database username
+  RDSPassword:
+    Type: String
+    NoEcho: true
+    Description: Database password
+  S3BucketName:
+    Type: String
+    Description: Target S3 bucket name
+  S3KeyPrefix:
+    Type: String
+    Default: exports/
+    Description: S3 key prefix for exported files
