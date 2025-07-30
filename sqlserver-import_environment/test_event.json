@@ -1,0 +1,4 @@
+{
+  "query": "SELECT TOP 5 ICDId, SpanishDescription FROM Medinet.dbo.ICD11 WHERE ChapterNo IS NOT NULL ORDER BY SpanishDescription DESC;",
+  "test_mode": true
+}

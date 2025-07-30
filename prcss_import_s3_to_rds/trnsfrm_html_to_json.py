@@ -5,7 +5,7 @@ import os
 
 # === Rutas de entrada/salida ===
 current_dir = os.path.dirname(os.path.abspath(__file__))
-input_file = os.path.join(current_dir, '..', 'prcss_data_files', '0_Asma.html')
+input_file = os.path.join(current_dir, '..', 'prcss_data_files', 'test_disease.html')
 output_file = os.path.join(current_dir, '..', 'prcss_data_files', 'encyclopedia.json')
 
 # Variable global para el ID incremental

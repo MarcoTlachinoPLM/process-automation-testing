@@ -1,23 +1,25 @@
-# Ejemplo de importacion de Enciclopedias (Python)
 import os
+import sys
 import re
-from bs4 import BeautifulSoup
 import pyodbc
 from datetime import datetime
+from bs4 import BeautifulSoup
 
-# Configuración de la base de datos SQL Server
+# === Configuración del entorno para Lambda Layer ===
+os.environ['LD_LIBRARY_PATH'] = '/opt/lib:/opt/python/lib/python3.11/site-packages'
+os.environ['ODBCINI'] = '/opt/odbc.ini'
+os.environ['ODBCSYSINI'] = '/opt'
+sys.path.insert(0, '/opt/python/lib/python3.11/site-packages')
+
+# === Configuración de conexión usando variables de entorno ===
 DB_CONFIG = {
-    "server": "plm-rds-desarrollopreproductivo.co6eawhyglix.us-east-1.rds.amazonaws.com",
-    "database": "ZMedinet_Pruebas",
-    "username": "marco.tlachino",
-    "password": "Temporal1234*"
+    "server": os.environ.get("DB_SERVER"),
+    "database": os.environ.get("DB_NAME"),
+    "username": os.environ.get("DB_USER"),
+    "password": os.environ.get("DB_PASSWORD")
 }
 
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-input_file = os.path.join(current_dir, '..', 'prcss_data_files', 'test_disease.html')
-
-# Mapeo para EncyclopediaTypes
+# === Mapeos estáticos ===
 encyclopedia_types = {
     "Enfermedades": 1,
     "Síntomas": 2,
@@ -25,7 +27,6 @@ encyclopedia_types = {
     "Procedimientos Diagnosticos": 4
 }
 
-# Mapeo de grupos de atributos
 rubro_maestro_map = {
     "Descripción": 2,
     "Sinónimos": 3,
@@ -40,19 +41,39 @@ rubroenc_map = {
     "Bibliografía": 9
 }
 
+# === Init Funciones auxiliares ===
+def log_environment():
+    """Log important environment settings"""
+    print("=== Environment Configuration ===")
+    print(f"LD_LIBRARY_PATH: {os.getenv('LD_LIBRARY_PATH')}")
+    print(f"ODBCINI: {os.getenv('ODBCINI')}")
+    print(f"ODBCSYSINI: {os.getenv('ODBCSYSINI')}")
+    print("Python sys.path:", sys.path)
+    
+    # Verificar existencia de archivos críticos
+    critical_files = [
+        '/opt/python/lib/python3.11/site-packages/pyodbc.so',
+        '/opt/microsoft/msodbcsql18/lib64/libmsodbcsql-18.1.so.1.1',
+        os.getenv('ODBCINI')
+    ]
+    
+    for file in critical_files:
+        exists = "YES" if os.path.exists(file) else "NO!!!"
+        print(f"{exists} - {file}")
+
 def get_db_connection():
-    """Establece conexión con SQL Server usando pyodbc"""
     conn_str = (
-        f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+        f"DRIVER={{ODBC Driver 18 for SQL Server}};"
         f"SERVER={DB_CONFIG['server']};"
         f"DATABASE={DB_CONFIG['database']};"
         f"UID={DB_CONFIG['username']};"
-        f"PWD={DB_CONFIG['password']}"
+        f"PWD={DB_CONFIG['password']};"
+        f"Encrypt=yes;TrustServerCertificate=yes;"
     )
     return pyodbc.connect(conn_str)
 
-def get_encyclopedia_types(str):
-    str_lwr = str.lower()
+def get_encyclopedia_types(str_label):
+    str_lwr = str_label.lower()
     for key in encyclopedia_types:
         if str_lwr in key.lower():
             return encyclopedia_types[key]
@@ -64,14 +85,12 @@ def get_attribute_id(label):
         if key.lower() in lower_label:
             return rubro_maestro_map[key]
     return None
+# === End Funciones auxiliares ===
 
+# === Init Extracción de datos ===
 def extract_data_from_html(html_content):
-    """Extrae datos del HTML y los estructura para la BD"""
-    print(f"BeautifulSoup()...")
     soup = BeautifulSoup(html_content, "html.parser")
-    print(f"get_encyclopedia_types()...")
     encyclpd_Id = get_encyclopedia_types("Enfermedad")
-    print(f"** encyclpd_Id: {encyclpd_Id}")
     result = {
         "PLMCode": "",
         "EncyclopediaName": "",
@@ -83,24 +102,28 @@ def extract_data_from_html(html_content):
         "Active": 1,
         "MedicalEncyclopediaAttribute": []
     }
-    # Extraer título
+
+    # Título
     title_tag = soup.find("title")
     result["EncyclopediaName"] = title_tag.get_text(strip=True) if title_tag else ""
-    # Extraer PLMCode
+
+    # Código PLM
     codigo_tag = soup.find("span", class_="Codigo")
     if codigo_tag:
         match = re.search(r"\[(.*?)\]", codigo_tag.get_text())
         if match:
             result["PLMCode"] = match.group(1)
-    # Extraer descripción principal
+
+    # Descripción principal
     desc_rubro = soup.find("p", class_="RubroMaestro", string=lambda t: t and "Descripción" in t)
     if desc_rubro:
         desc_normal = desc_rubro.find_next_sibling("p", class_="Normal")
         if desc_normal:
             result["Description"] = str(desc_normal)
-    # Procesar atributos
+
+    # Atributos (RubroMaestro y rubroenc)
     attributes = []
-    # Rubros principales
+
     for tag in soup.find_all("p", class_="RubroMaestro"):
         label = tag.get_text(strip=True).replace(":", "")
         attribute_id = get_attribute_id(label)
@@ -115,7 +138,7 @@ def extract_data_from_html(html_content):
                 "Content": "",
                 "HTMLContent": html_content.strip()
             })
-    # Subrubros
+
     for tag in soup.find_all("p", class_="rubroenc"):
         span = tag.find("span", class_="h2")
         if span:
@@ -134,13 +157,14 @@ def extract_data_from_html(html_content):
                     "Content": "",
                     "HTMLContent": html_content.strip()
                 })
+
     result["MedicalEncyclopediaAttribute"] = attributes
     return result
+# === End Extracción de datos ===
 
+# === Init Load datos en RDS ===
 def insert_encyclopedia_data(conn, data):
-    """Inserta datos en la tabla MedicalEncyclopedia y devuelve el ID generado"""
     with conn.cursor() as cursor:
-        # SQL Server usa OUTPUT INSERTED para obtener el ID generado
         query = """
         INSERT INTO MedicalEncyclopedia (
             PLMCode, EncyclopediaName, Description, ReadingTime, 
@@ -149,7 +173,6 @@ def insert_encyclopedia_data(conn, data):
         OUTPUT INSERTED.EncyclopediaId
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
         """
-        
         cursor.execute(query, (
             data["PLMCode"],
             data["EncyclopediaName"],
@@ -161,67 +184,80 @@ def insert_encyclopedia_data(conn, data):
             data["Active"],
             datetime.now()
         ))
-        
         encyclopedia_id = cursor.fetchone()[0]
         conn.commit()
         return encyclopedia_id
 
 def insert_attributes_data(conn, encyclopedia_id, attributes):
-    """Inserta los atributos relacionados con una enciclopedia"""
     with conn.cursor() as cursor:
         query = """
         INSERT INTO MedicalEncyclopediaAttribute (
             AttributeGroupId, EncyclopediaId, Content, HTMLContent
         ) VALUES (?, ?, ?, ?);
         """
-        
-        # Preparar todos los valores para ejecutarlos en un solo execute_many
         values = [
             (
                 attr["AttributeGroupId"],
                 encyclopedia_id,
                 attr["Content"],
                 attr["HTMLContent"]
-            ) 
+            )
             for attr in attributes
         ]
-        
         cursor.executemany(query, values)
         conn.commit()
+# === End Load datos en RDS ===
 
-def process_html_file(html_content):
-    """Procesa un archivo HTML y lo inserta en la BD"""
-    print(f"get_db_connection()...")
+def process_html_content(html_content):
     conn = get_db_connection()
     try:
-        # Extraer datos del HTML
-        print(f"extract_data_from_html()...")
         data = extract_data_from_html(html_content)
-        
-        # Insertar datos principales
         encyclopedia_id = insert_encyclopedia_data(conn, data)
-        
-        # Insertar atributos
         if data["MedicalEncyclopediaAttribute"]:
             insert_attributes_data(conn, encyclopedia_id, data["MedicalEncyclopediaAttribute"])
-        
-        print(f"Datos insertados correctamente. EncyclopediaId: {encyclopedia_id}")
+        return {"status": "success", "encyclopedia_id": encyclopedia_id}
     except Exception as e:
         conn.rollback()
-        print(f"Error al procesar archivo: {e}")
+        return {"status": "error", "message": str(e)}
     finally:
         conn.close()
 
-if __name__ == "__main__":
-    # Procesar todos los archivos HTML
+# === Lambda handler principal ===
+def lambda_handler(event, context):
     try:
-        if not os.path.exists(input_file):
-            raise FileNotFoundError(f"El archivo {input_file} no existe. Verifica la ruta.")
-        print(f"Leer y procesar archivo: {input_file}")
-        # Leer y procesar archivo
-        with open(input_file, "r", encoding="utf-8") as file:
-            html_content = file.read()
-        print(f"process_html_file()...")
-        process_html_file(html_content)
+        # 1. Log environment configuration
+        log_environment()
+        
+        # 2. Validar variables de entorno
+        required_vars = [
+            'RDS_ENDPOINT', 'RDS_DATABASE',
+            'RDS_USERNAME', 'RDS_PASSWORD',
+            'S3_BUCKET', 'S3_KEY'
+        ]
+        
+        missing_vars = [var for var in required_vars if not os.getenv(var)]
+        if missing_vars:
+            raise ValueError(f"Missing environment variables: {', '.join(missing_vars)}")
+        
+        html_content = event.get("html_content")
+        if not html_content:
+            return {
+                "statusCode": 400,
+                "body": "html_content no proporcionado en el evento"
+            }
+
+        result = process_html_content(html_content)
+
+        return {
+            "statusCode": 200 if result["status"] == "success" else 500,
+            "body": result
+        }
+
     except Exception as e:
-        print(f"Error al procesar archivo {input_file}: {e}")
+        return {
+            "statusCode": 500,
+            "body": {
+                "status": "error",
+                "message": str(e)
+            }
+        }

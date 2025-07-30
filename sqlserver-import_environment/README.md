@@ -3,7 +3,7 @@
 ####  Proof Concept EventBridge  ###
 1. Empaquetar dependencias y subir como capa:
 
-cd proof_concept_event_bridge
+cd sqlserver-import_environment
 
 mkdir package
 

@@ -261,32 +261,3 @@ docker cp <ID_CONTAINER>:/tmp/pyodbc_layer.zip ./pyodbc_layer_x86.zip
 
 ###  End Docker layer pyodbc V2  ###
 
-
-
-####  SQL Server Layer Environment  ###
-1. Instale las bibliotecas externas en un nuevo directorio package.
-
-cd sqlserver-layer_environment
-
-# 1.1 Crear estructura del layer
-mkdir -p lambda-layer/python/lib/python3.12/site-packages
-cd lambda-layer
-
-# 1.2. Instalar pyodbc dentro del path del layer
-pip3 install pyodbc -t python/lib/python3.12/site-packages
-
-# 3. Crear carpeta para librerías nativas
-mkdir -p python/lib64
-
-# 4. Copiar librerías ODBC y de SQL Server
-cp /usr/lib64/libodbc*.so* python/lib64/
-cp /opt/microsoft/msodbcsql17/lib64/libmsodbcsql-*.so python/lib64/
-cp /opt/microsoft/msodbcsql17/lib64/libmsodbcsql17.so python/lib64/
-
-# 5. Crear el ZIP final del layer
-cd lambda-layer
-zip -r9 pyodbc-layer.zip python
-
-
-###  End SQL Server Layer Environment  ###
-

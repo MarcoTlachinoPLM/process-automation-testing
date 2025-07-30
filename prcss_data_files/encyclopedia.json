@@ -1,8 +1,8 @@
 {
   "EncyclopediaId": 0,
-  "PLMCode": "EM1-003",
-  "EncyclopediaName": "0_Asma",
-  "Description": "<p class=\"Normal\"><span class=\"descrpad\">El asma es una enfermedad crónica que inflama y estrecha las vías respiratorias, causando </span><span class=\"Codigo\">dificultad para respirar [EM1-059]</span><span class=\"descrpad\">, </span><span class=\"Codigo\">tos [EM1-103]</span><span class=\"descrpad\">, </span><span class=\"Codigo\">opresión en el pecho [EM1-104]</span><span class=\"descrpad\"> y </span><span class=\"Codigo\">sibilancias [EM1-105]</span><span class=\"descrpad\">. Sus síntomas pueden empeorar por </span><span class=\"Codigo\">alergias [EM1-106]</span><span class=\"descrpad\">, infecciones o ejercicio</span></p>",
+  "PLMCode": "EM1-077",
+  "EncyclopediaName": "Dolor_articular,_muscular_y__seo",
+  "Description": "<p class=\"Normal\"><span class=\"descrpad\">Molestia que puede originarse en músculos, articulaciones o huesos. Su intensidad y duración varían según la causa, desde lesiones agudas hasta enfermedades crónicas. El tratamiento depende del origen e incluye reposo, analgésicos y rehabilitación.</span></p>",
   "ReadingTime": "",
   "EncyclopediaImage": "",
   "EncyclopediaTypeId": 1,
@@ -13,37 +13,19 @@
       "AttributeGroupId": 2,
       "EncyclopediaId": 0,
       "Content": "",
-      "HTMLContent": "<p class=\"Normal\"><span class=\"Sinonimos\">Asma bronquial | enfermedad respiratoria obstructiva crónica intermitente</span></p>"
+      "HTMLContent": "<p class=\"Normal\"><span class=\"Sinonimos\">Dolor musculoesquelético | Dolor osteoarticular | Dolor óseo | dolor de articulaciones | dolor muscular | mialgia | artralgia | dolor corporal | dolor músculo-articular | dolor de huesos.</span></p>"
     },
     {
       "AttributeGroupId": 3,
       "EncyclopediaId": 0,
       "Content": "",
-      "HTMLContent": "<p class=\"Normal\"><span class=\"PalabrasClave\">Asma | dificultad para respirar | tos crónica | sibilancias | broncodilatadores | alergias respiratorias | enfermedades pulmonares | espirómetro</span></p>"
+      "HTMLContent": "<p class=\"Normal\"><span class=\"PalabrasClave\">Dolor de articulaciones | dolor muscular | dolor óseo | dolor musculoesquelético | dolor de huesos | mialgia | artralgia | molestias musculares | dolor en el cuerpo | inflamación articular | lesiones musculares.</span></p>"
     },
     {
       "AttributeGroupId": 1,
       "EncyclopediaId": 0,
       "Content": "",
-      "HTMLContent": "<p class=\"Normal\"><span class=\"descrpad\">El asma es una enfermedad crónica que inflama y estrecha las vías respiratorias, causando </span><span class=\"Codigo\">dificultad para respirar [EM1-059]</span><span class=\"descrpad\">, </span><span class=\"Codigo\">tos [EM1-103]</span><span class=\"descrpad\">, </span><span class=\"Codigo\">opresión en el pecho [EM1-104]</span><span class=\"descrpad\"> y </span><span class=\"Codigo\">sibilancias [EM1-105]</span><span class=\"descrpad\">. Sus síntomas pueden empeorar por </span><span class=\"Codigo\">alergias [EM1-106]</span><span class=\"descrpad\">, infecciones o ejercicio</span></p>"
-    },
-    {
-      "AttributeGroupId": 4,
-      "EncyclopediaId": 0,
-      "Content": "",
-      "HTMLContent": "<p class=\"h5\">¿Qué es el asma?</p><p class=\"Normal\">Es una enfermedad crónica de los pulmones que causa inflamación y estrechamiento de las vías respiratorias, lo cual dificulta la respiración. Sus síntomas pueden aparecer en forma de episodios llamados crisis asmáticas o mantenerse de forma persistente.</p><p class=\"h5\">¿A quiénes afecta?</p><p class=\"Normal\">Afecta tanto a niños como a adultos. Es más común en personas con antecedentes familiares de asma o <span class=\"Codigo\">alergias [EM1-106]</span>, y en quienes han estado expuestos a irritantes como humo, polvo, aire frío o infecciones respiratorias.</p>"
-    },
-    {
-      "AttributeGroupId": 5,
-      "EncyclopediaId": 0,
-      "Content": "",
-      "HTMLContent": "<p class=\"h5\">¿Qué síntomas pueden aparecer?</p><p class=\"ul\"><span class=\"li\">•\t</span><span class=\"Codigo\">Dificultad para respirar [EM1-059]</span></p><p class=\"ul\"><span class=\"li\">•\t</span><span class=\"Codigo\">Tos [EM1-103]</span><span class=\"li\"> persistente</span></p><p class=\"ul\"><span class=\"li\">•\t</span><span class=\"Codigo\">Sensación de opresión en el pecho [EM1-104]</span></p><p class=\"ul\"><span class=\"li\">•\t</span><span class=\"Codigo\">Sibilancias [EM1-105]</span><span class=\"li\"> (sonido silbante al respirar)</span></p><p class=\"ul\"><span class=\"li\">•\tEmpeoramiento de los síntomas por la noche, durante el ejercicio o ante exposición a factores desencadenantes como polvo, humo, infecciones o aire frío</span></p><p class=\"Normal\">En algunos casos, una crisis asmática grave puede dificultar tanto la respiración que impide hablar o puede llevar a pérdida de la conciencia.</p><p class=\"h5\">¿Cómo se diagnostica?</p><p class=\"Normal\">El diagnóstico se basa en:</p><p class=\"ul\"><span class=\"li\">•\tEvaluación clínica de los síntomas</span></p><p class=\"ul\"><span class=\"li\">•\tPruebas de función pulmonar como la </span><span class=\"Codigo\">espirometría [EM1-107]</span></p><p class=\"ul\"><span class=\"li\">•\tEn algunos casos, </span><span class=\"Codigo\">pruebas de alergia [EM1-108]</span><span class=\"li\"> (cutáneas o en sangre)</span></p><p class=\"ul\"><span class=\"li\">•\tEvaluación de la respuesta a medicamentos </span><span class=\"Codigo\">broncodilatadores [MM1-17]</span></p>"
-    },
-    {
-      "AttributeGroupId": 6,
-      "EncyclopediaId": 0,
-      "Content": "",
-      "HTMLContent": "<p class=\"h5\">¿Por qué es importante atenderlo?</p><p class=\"Normal\">El asma no tratada puede afectar la calidad de vida, limitar las actividades físicas, interrumpir el sueño, causar ausentismo escolar o laboral, y en casos graves, puede poner en riesgo la vida.</p><p class=\"h5\">¿Tiene tratamiento?</p><p class=\"Normal\">Sí. El tratamiento incluye:</p><p class=\"ul\"><span class=\"li\">•\t</span><span class=\"BNegroNormal\">Medicamentos de alivio rápido</span><span class=\"li\"> (</span><span class=\"Codigo\">broncodilatadores [MM1-17]</span><span class=\"li\"> de acción corta), que actúan en minutos y se usan ante síntomas agudos.</span></p><p class=\"ul\"><span class=\"li\">•\t</span><span class=\"BNegroNormal\">Medicamentos de control a largo plazo</span><span class=\"li\"> (como </span><span class=\"Codigo\">corticoides [MM1-20]</span><span class=\"li\"> inhalados), que reducen la inflamación y previenen crisis futuras.</span></p><p class=\"ul\"><span class=\"li\">•\t</span><span class=\"BNegroNormal\">Plan de acción para el asma</span><span class=\"li\">, personalizado junto con el médico, que indica qué medicamentos usar, cómo actuar ante síntomas y cuándo buscar ayuda.</span></p><p class=\"Normal\">El tratamiento también implica evitar los factores desencadenantes y mantener revisiones periódicas.</p><p class=\"h5\">Pronóstico</p><p class=\"Normal\">La mayoría de las personas con asma puede llevar una vida normal con el tratamiento adecuado. Algunos niños pueden mejorar con el tiempo, aunque otros continuarán con síntomas en la edad adulta. Un buen control del asma reduce complicaciones y mejora el bienestar.</p>"
+      "HTMLContent": "<p class=\"Normal\"><span class=\"descrpad\">Molestia que puede originarse en músculos, articulaciones o huesos. Su intensidad y duración varían según la causa, desde lesiones agudas hasta enfermedades crónicas. El tratamiento depende del origen e incluye reposo, analgésicos y rehabilitación.</span></p>"
     }
   ]
 }

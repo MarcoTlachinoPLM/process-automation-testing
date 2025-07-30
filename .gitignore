@@ -10,6 +10,6 @@ docker-pyodbc-layer-v2/python
 docker-pyodbc-layer-v2/*.zip
 prcss_export_rds_to_s3/venv
 prcss_import_s3_to_rds/venv
-proof_concept_event_bridge/*.zip
-sqlserver-layer_environment/*
+sqlserver-layer_environment/*.zip
+sqlserver-layer_environment/pyodbc_layer/*
 .DS_Store
