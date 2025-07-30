@@ -10,21 +10,39 @@ os.environ['ODBCINI'] = '/opt/odbc.ini'
 os.environ['ODBCSYSINI'] = '/opt'
 sys.path.insert(0, '/opt/python/lib/python3.11/site-packages')
 
+# Verificar archivos críticos
+critical_files = [
+    '/opt/python/lib/python3.11/site-packages/pyodbc.cpython-311-aarch64-linux-gnu.so',
+    '/opt/lib/libmsodbcsql-18.1.so.1.1',
+    '/opt/odbc.ini'
+]
+
+for file in critical_files:
+    if not os.path.exists(file):
+        print(f"CRITICAL: Missing file {file}")
+    else:
+        print(f"File exists: {file}")
+
 # Verificación de importación
 try:
     import pyodbc
     print("¡pyodbc importado correctamente!")
     print(f"Versión pyodbc: {pyodbc.version}")
     print(f"Drivers disponibles: {pyodbc.drivers()}")
-    import boto3
-    print("boto3 importado correctamente!")
-    print(f"Versión boto3: {boto3.version}")
 except ImportError as e:
     print(f"Error importando pyodbc: {str(e)}")
     print("sys.path:", sys.path)
     print("LD_LIBRARY_PATH:", os.getenv('LD_LIBRARY_PATH'))
     print("Contenido de /opt/python/lib/python3.11/site-packages:")
     os.system("ls -la /opt/python/lib/python3.11/site-packages")
+    raise
+
+try:
+    import boto3
+    print("boto3 importado correctamente!")
+    print(f"Versión boto3: {boto3.__version__}")
+except ImportError as e:
+    print(f"Error importando boto3: {str(e)}")
     raise
 
 def log_environment():

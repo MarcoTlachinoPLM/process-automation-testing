@@ -20,7 +20,9 @@ cd pyodbc_layer
 
 # 3.1 Construye la imagen Docker
 
-docker build -t pyodbc-builder .
+docker build --platform linux/arm64 -t pyodbc-builder-arm64 .
+
+# docker build -t pyodbc-builder .
 
 # 3.2 Create a temporary container
 
@@ -40,11 +42,10 @@ unzip -l pyodbc-layer.zip | grep pyodbc.cpython
 
 aws lambda publish-layer-version \
     --layer-name pyodbc-sqlserver-layer \
-    --description "Layer para conexiones pyodbc a SQL Server. Incluye: pyodbc 4.0.39, unixODBC 2.3.7, Microsoft ODBC Driver 18. Configura automáticamente LD_LIBRARY_PATH, ODBCINI y ODBCSYSINI..." \
+    --description "Layer ARM64 para pyodbc construido desde Mac M1. Incluye: pyodbc 4.0.39, ODBC Driver 18, configurado para Lambda Python 3.11 ARM..." \
     --zip-file fileb://pyodbc-layer.zip \
     --compatible-runtimes python3.11 \
-    --compatible-architectures arm64 \
-    --license-info "MIT"
+    --compatible-architectures arm64
 
 ###  End Proof Concept EventBridge  ###
 
