@@ -1,0 +1,91 @@
+{
+  "EncyclopediaId": 0,
+  "PLMCode": "EM1-077",
+  "EncyclopediaName": "Dolor_articular,_muscular_y__seo",
+  "Description": "<p class=\"Normal\"><span class=\"descrpad\">Molestia que puede originarse en músculos, articulaciones o huesos. Su intensidad y duración varían según la causa, desde lesiones agudas hasta enfermedades crónicas. El tratamiento depende del origen e incluye reposo, analgésicos y rehabilitación.</span></p>",
+  "ReadingTime": "",
+  "EncyclopediaImage": "",
+  "EncyclopediaTypeId": 1,
+  "AuthorId": "",
+  "Active": 1,
+  "MedicalEncyclopediaAttribute": [
+    {
+      "AttributeGroupId": 2,
+      "EncyclopediaId": 0,
+      "Content": "",
+      "HTMLContent": "<p class=\"Normal\"><span class=\"Sinonimos\">Dolor musculoesquelético | Dolor osteoarticular | Dolor óseo | dolor de articulaciones | dolor muscular | mialgia | artralgia | dolor corporal | dolor músculo-articular | dolor de huesos.</span></p>"
+    },
+    {
+      "AttributeGroupId": 3,
+      "EncyclopediaId": 0,
+      "Content": "",
+      "HTMLContent": "<p class=\"Normal\"><span class=\"PalabrasClave\">Dolor de articulaciones | dolor muscular | dolor óseo | dolor musculoesquelético | dolor de huesos | mialgia | artralgia | molestias musculares | dolor en el cuerpo | inflamación articular | lesiones musculares.</span></p>"
+    },
+    {
+      "AttributeGroupId": 1,
+      "EncyclopediaId": 0,
+      "Content": "",
+      "HTMLContent": "<p class=\"Normal\"><span class=\"descrpad\">Molestia que puede originarse en músculos, articulaciones o huesos. Su intensidad y duración varían según la causa, desde lesiones agudas hasta enfermedades crónicas. El tratamiento depende del origen e incluye reposo, analgésicos y rehabilitación.</span></p>"
+    }
+  ],
+  "MedicalEntriesTerms": {
+    "MedicalTerm": [
+      {
+        "TermId": 1,
+        "Term": "Asma",
+        "NormalizedTerm": "asma"
+      },
+      {
+        "TermId": 2,
+        "Term": "Asma bronquial",
+        "NormalizedTerm": "asma"
+      },
+      {
+        "TermId": 3,
+        "Term": "enfermedad respiratoria obstructiva crónica intermitente",
+        "NormalizedTerm": "asma"
+      },
+      {
+        "TermId": 4,
+        "Term": "dificultad para respirar",
+        "NormalizedTerm": "asma"
+      },
+      {
+        "TermId": 4,
+        "Term": "dificultad para respirar",
+        "NormalizedTerm": "asma"
+      },
+      {
+        "TermId": 4,
+        "Term": "tos crónica...",
+        "NormalizedTerm": "asma"
+      }
+    ],
+    "MedicalEncyclopediaTerm": [
+      {
+        "EncyclopediaId": 1,
+        "TermId": 1
+      }
+    ],
+    "MedicalEntryTerm": [
+      {
+        "TermId": 1,
+        "EntryTermId": 2,
+        "EntryTermTypeId": 1,
+        "IsPrimary": 1
+      },
+      {
+        "TermId": 1,
+        "EntryTermId": 3,
+        "EntryTermTypeId": 1,
+        "IsPrimary": 1
+      },
+      {
+        "TermId": 1,
+        "EntryTermId": 4,
+        "EntryTermTypeId": 1,
+        "IsPrimary": 1
+      }
+    ]
+  }
+}

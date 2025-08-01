@@ -95,7 +95,9 @@ pip install pyodbc boto3 beautifulsoup4
 
 python trnsfrm_html_to_json.py
 
-python import_html_to_rds.py
+python import_html_to_rds_v1.py
+
+python import_html_to_rds_v2.py
 
 python import_s3_to_rds.py
 
