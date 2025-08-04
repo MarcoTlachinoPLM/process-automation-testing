@@ -2,42 +2,25 @@
 import os
 import pyodbc
 import re
+import configparser
 from bs4 import BeautifulSoup
 from datetime import datetime
-
-DB_CONFIG = {
-    "server": "plm-rds-desarrollopreproductivo.co6eawhyglix.us-east-1.rds.amazonaws.com",
-    "database": "ZMedinet_Pruebas",
-    "username": "marco.tlachino",
-    "password": "Temporal1234*"
-}
 
 # === Rutas de entrada ===
 current_dir = os.path.dirname(os.path.abspath(__file__))
 input_file = os.path.join(current_dir, '..', 'prcss_data_files', 'test_disease.html')
+config = configparser.ConfigParser()
+config.read(os.path.join(current_dir, '..', 'config.ini'))
 
-# Mapeo para EncyclopediaTypes
-encyclopedia_types = {
-    "Enfermedades": 1,
-    "Síntomas": 2,
-    "Procedimientos Quirurgicos": 3,
-    "Procedimientos Diagnosticos": 4
+DB_CONFIG = {
+    "server": config["database"]["server"],
+    "database": config["database"]["database"],
+    "username": config["database"]["username"],
+    "password": config["database"]["password"]
 }
 
 # Mapeo de grupos de atributos
-rubro_maestro_map = {
-    "Descripción": 2,
-    "Sinónimos": 3,
-    "Palabras clave": 4
-}
-
-rubroenc_map = {
-    "Definición y causas": 5,
-    "Síntomas y diagnóstico": 6,
-    "Tratamiento y bienestar": 7,
-    "Prevención y detección oportuna": 8,
-    "Bibliografía": 9
-}
+rubroenc_map = {}
 
 entry_term_type = {
     "Sinónimos": "Synonym",
@@ -67,15 +50,24 @@ def gt_cat_entry_term_type(conn):
     """Recupera diccionario de EntryTermType."""
     cat_et_type = {}
     with conn.cursor() as cursor:
-        cursor.execute("SELECT EntryTermTypeId, TypeName FROM ZMedinet_Pruebas.dbo.EntryTermType;")
+        cursor.execute("SELECT EntryTermTypeId, TypeName FROM EntryTermType;")
         for row in cursor.fetchall():
             id_value = row[0]
             nombre_value = row[1]
             cat_et_type[nombre_value] = id_value
         return cat_et_type
-# ======= DB GET CATALOGS =======
 
-def get_attribute_id(label):
+def gt_cat_medical_attribute(conn):
+    """Recupera diccionario para MedicalAttributeGroup."""
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT AttributeGroupId, AttributeGroupName FROM MedicalAttributeGroup;")
+        for row in cursor.fetchall():
+            id_value = row[0]
+            nombre_value = row[1]
+            rubroenc_map[nombre_value] = id_value
+        return True
+# ======= DB GET CATALOGS =======
+def get_medical_attribute(label):
     lower_label = label.lower()
     for key in rubroenc_map:
         if key.lower() in lower_label:
@@ -162,8 +154,8 @@ def extract_data_from_html_local(html_content):
     added_mdcl.add(fthr_term)
     
     # RubroMaestro detail
-    ubro_soup = soup.find_all("p", class_="RubroMaestro")
-    for tag in ubro_soup:
+    rub_master = soup.find_all("p", class_="RubroMaestro")
+    for tag in rub_master:
         label = tag.get_text(strip=True).replace(":", "")
         et_type_str = get_entryterm_type(label)
         if et_type_str:
@@ -193,11 +185,12 @@ def extract_data_from_html_local(html_content):
     
     # Process Attributes
     attributes = []
-    for tag in soup.find_all("p", class_="rubroenc"):
+    rub_enc = soup.find_all("p", class_="rubroenc")
+    for tag in rub_enc:
         span = tag.find("span", class_="h2")
         if span:
             label = span.get_text(strip=True).replace(":", "")
-            attribute_id = rubroenc_map.get(label)
+            attribute_id = get_medical_attribute(label)
             if attribute_id:
                 html_content = ''
                 pointer = tag.find_next_sibling()
@@ -211,7 +204,10 @@ def extract_data_from_html_local(html_content):
                     "Content": "",
                     "HTMLContent": html_content.strip()
                 })
-    
+            else:
+                #TODO: Validar si hay que agregarlo, o se debe crear antes en el catalogo...
+                print(f"New label: {label}")
+
     result["MedicalEncyclopediaAttribute"] = attributes
     
     return result
@@ -234,6 +230,30 @@ def get_encyclopedia_data(conn, data):
             return row[0]
         else:
             return None
+
+def insert_attributes(conn, encyclopedia_id, attributes):
+    """Inserta ó actualiza los atributos relacionados con una enciclopedia"""
+    if len(attributes) > 0:
+        with conn.cursor() as cursor:
+            query = """
+            INSERT INTO MedicalEncyclopediaAttribute (
+                AttributeGroupId, EncyclopediaId, Content, HTMLContent
+            ) VALUES (?, ?, ?, ?);
+            """
+            # Preparar todos los valores para ejecutarlos en un solo execute_many
+            values = [
+                (
+                    attr["AttributeGroupId"],
+                    encyclopedia_id,
+                    attr["Content"],
+                    attr["HTMLContent"]
+                )
+                for attr in attributes
+            ]
+            print(f"Values: {values}")
+            print(f"INSERT INTO MedicalEncyclopediaAttribute ()...")
+            cursor.executemany(query, values)
+            conn.commit()
 
 def insert_or_get_encyclopedia_data(conn, data):
     """Inserta datos en la tabla MedicalEncyclopedia y devuelve el ID generado"""
@@ -330,10 +350,10 @@ def insert_medical_entry_term(conn, encycl_id, et_type_id, data):
             TermId, EntryTermId, EntryTermTypeId, IsPrimary
         ) VALUES (?, ?, ?, ?);
         """
-        print(f"INSERT INTO MedicalEntryTerm (...) VALUES({data["TermId"]}, {data["TermId"]}, {et_type_id}, {data["IsPrimary"]})")
+        print(f"INSERT INTO MedicalEntryTerm (...) VALUES({encycl_id}, {data["TermId"]}, {et_type_id}, {data["IsPrimary"]})")
         cursor.execute(
             query_met,
-            (data["TermId"], data["TermId"], et_type_id, data["IsPrimary"])
+            (encycl_id, data["TermId"], et_type_id, data["IsPrimary"])
         )
         conn.commit()
         return
@@ -365,14 +385,14 @@ def insert_entries_terms_data(conn, encyclopedia_id, entries_terms):
             else:
                 print(f"Error in insert_or_get_term!!!")
             # Finally process MedicalEntryTerm
-            #ids_list = list(term_ids)
+            ids_list = list(term_ids)
             cat_et_type = gt_cat_entry_term_type(conn)
             for count, et_data in enumerate(entries_terms):
                 if count > 0:
                     et_type_id = cat_et_type.get(et_data["TermType"])
                     if et_type_id:
                         print(f"et_type_id: {et_type_id}")
-                        insert_medical_entry_term(conn, encyclopedia_id, et_type_id, et_data)
+                        insert_medical_entry_term(conn, ids_list[0], et_type_id, et_data)
                     else:
                         print(f"Error al recuperar get_entry_term_type_id!!!")
 # ========== DB SECELT, INSERT FUNCIONS ==========
@@ -382,6 +402,9 @@ def process_html_file(html_content):
     print(f"get_db_connection()...")
     conn = get_db_connection()
     try:
+        # Inicializar Catalogos
+        gt_cat_medical_attribute(conn)
+        
         # Extraer datos del HTML
         data = extract_data_from_html_local(html_content)
         

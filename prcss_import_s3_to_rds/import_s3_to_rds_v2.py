@@ -1,13 +1,21 @@
 import os
-import pyodbc
 import re
+import boto3
+import pyodbc
 import configparser
 from bs4 import BeautifulSoup
 from datetime import datetime
 
-# === Rutas de entrada ===
+# Configuración de AWS S3
+S3_CONFIG = {
+    "bucket_name": "opensearch-dev",
+    "s3_key": "test_files/"
+}
+
+s3_client = boto3.client("s3")
+
+# Configuración de la base de datos SQL Server
 current_dir = os.path.dirname(os.path.abspath(__file__))
-input_file = os.path.join(current_dir, '..', 'prcss_data_files', 'test_disease.html')
 config = configparser.ConfigParser()
 config.read(os.path.join(current_dir, '..', 'config.ini'))
 
@@ -18,40 +26,6 @@ DB_CONFIG = {
     "password": config["database"]["password"]
 }
 
-# Mapeo para EncyclopediaTypes
-encyclopedia_types = {
-    "Enfermedades": 1,
-    "Síntomas": 2,
-    "Procedimientos Quirurgicos": 3,
-    "Procedimientos Diagnosticos": 4
-}
-
-# Mapeo de grupos de atributos
-rubro_maestro_map = {
-    "Descripción": 2,
-    "Sinónimos": 3,
-    "Palabras clave": 4
-}
-
-rubroenc_map = {
-    "Definición y causas": 5,
-    "Síntomas y diagnóstico": 6,
-    "Tratamiento y bienestar": 7,
-    "Prevención y detección oportuna": 8,
-    "Bibliografía": 9
-}
-
-entry_term_type = {
-    "Sinónimos": "Synonym",
-    "Palabras clave": "Related Term"
-}
-
-cat_term_type = {
-    "Sinónimos": "Sinonimos",
-    "Palabras clave": "PalabrasClave"
-}
-
-# === Database Connection ===
 def get_db_connection():
     """Establece conexión con SQL Server usando pyodbc"""
     conn_str = (
@@ -63,20 +37,56 @@ def get_db_connection():
     )
     return pyodbc.connect(conn_str)
 
+# Mapeo de grupos de atributos
+rubroenc_map = {}
+
+entry_term_type = {
+    "Sinónimos": "Synonym",
+    "Palabras clave": "Related Term"
+}
+
+cat_term_type = {
+    "Sinónimos": "Sinonimos",
+    "Palabras clave": "PalabrasClave"
+}
+
+# ===== DATABASE CONNECTION =====
+def get_db_connection():
+    """Establece conexión con SQL Server usando pyodbc"""
+    conn_str = (
+        f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+        f"SERVER={DB_CONFIG['server']};"
+        f"DATABASE={DB_CONFIG['database']};"
+        f"UID={DB_CONFIG['username']};"
+        f"PWD={DB_CONFIG['password']}"
+    )
+    return pyodbc.connect(conn_str)
+# ===== DATABASE CONNECTION =====
+
+# ======= DB GET CATALOGS =======
 def gt_cat_entry_term_type(conn):
     """Recupera diccionario de EntryTermType."""
     cat_et_type = {}
     with conn.cursor() as cursor:
-        # Check if term exists
-        cursor.execute("SELECT EntryTermTypeId, TypeName FROM ZMedinet_Pruebas.dbo.EntryTermType;")
-        # Procesa los resultados fila por fila
+        cursor.execute("SELECT EntryTermTypeId, TypeName FROM EntryTermType;")
         for row in cursor.fetchall():
             id_value = row[0]
             nombre_value = row[1]
             cat_et_type[nombre_value] = id_value
         return cat_et_type
 
-def get_attribute_id(label):
+def gt_cat_medical_attribute(conn):
+    """Recupera diccionario para MedicalAttributeGroup."""
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT AttributeGroupId, AttributeGroupName FROM MedicalAttributeGroup;")
+        for row in cursor.fetchall():
+            id_value = row[0]
+            nombre_value = row[1]
+            rubroenc_map[nombre_value] = id_value
+        return True
+# ======= DB GET CATALOGS =======
+
+def get_medical_attribute(label):
     lower_label = label.lower()
     for key in rubroenc_map:
         if key.lower() in lower_label:
@@ -97,10 +107,8 @@ def get_entryterm_class(label):
             return cat_term_type[key]
     return None
 
-def extract_data_from_html_local(filepath):
-    with open(filepath, "r", encoding="utf-8") as file:
-        html_content = file.read()
-    
+# ========== EXTRACCION DE DATOS ==========
+def extract_data_from_html_local(html_content):
     soup = BeautifulSoup(html_content, "html.parser")
 
     # ========== ESTRUCTURA PRINCIPAL ==========
@@ -165,8 +173,8 @@ def extract_data_from_html_local(filepath):
     added_mdcl.add(fthr_term)
     
     # RubroMaestro detail
-    ubro_soup = soup.find_all("p", class_="RubroMaestro")
-    for tag in ubro_soup:
+    rub_master = soup.find_all("p", class_="RubroMaestro")
+    for tag in rub_master:
         label = tag.get_text(strip=True).replace(":", "")
         et_type_str = get_entryterm_type(label)
         if et_type_str:
@@ -196,11 +204,12 @@ def extract_data_from_html_local(filepath):
     
     # Process Attributes
     attributes = []
-    for tag in soup.find_all("p", class_="rubroenc"):
+    rub_enc = soup.find_all("p", class_="rubroenc")
+    for tag in rub_enc:
         span = tag.find("span", class_="h2")
         if span:
             label = span.get_text(strip=True).replace(":", "")
-            attribute_id = rubroenc_map.get(label)
+            attribute_id = get_medical_attribute(label)
             if attribute_id:
                 html_content = ''
                 pointer = tag.find_next_sibling()
@@ -214,12 +223,57 @@ def extract_data_from_html_local(filepath):
                     "Content": "",
                     "HTMLContent": html_content.strip()
                 })
-    
+            else:
+                #TODO: Validar si hay que agregarlo, o se debe crear antes en el catalogo...
+                print(f"New label: {label}")
+
     result["MedicalEncyclopediaAttribute"] = attributes
     
     return result
+# ========== EXTRACCION DE DATOS ==========
 
-# === Database Insertion Functions ===
+# ========== DB SECELT, INSERT FUNCIONS ==========
+def get_encyclopedia_data(conn, data):
+    with conn.cursor() as cursor:
+        # Check if exists
+        query_select = """
+        SELECT EncyclopediaId FROM MedicalEncyclopedia
+        WHERE PLMCode = ? AND EncyclopediaName = ?;
+        """
+        cursor.execute(
+            query_select, 
+            (data["PLMCode"], data["EncyclopediaName"])
+        )
+        row = cursor.fetchone()
+        if row:
+            return row[0]
+        else:
+            return None
+
+def insert_attributes(conn, encyclopedia_id, attributes):
+    """Inserta ó actualiza los atributos relacionados con una enciclopedia"""
+    if len(attributes) > 0:
+        with conn.cursor() as cursor:
+            query = """
+            INSERT INTO MedicalEncyclopediaAttribute (
+                AttributeGroupId, EncyclopediaId, Content, HTMLContent
+            ) VALUES (?, ?, ?, ?);
+            """
+            # Preparar todos los valores para ejecutarlos en un solo execute_many
+            values = [
+                (
+                    attr["AttributeGroupId"],
+                    encyclopedia_id,
+                    attr["Content"],
+                    attr["HTMLContent"]
+                )
+                for attr in attributes
+            ]
+            print(f"Values: {values}")
+            print(f"INSERT INTO MedicalEncyclopediaAttribute ()...")
+            cursor.executemany(query, values)
+            conn.commit()
+
 def insert_or_get_encyclopedia_data(conn, data):
     """Inserta datos en la tabla MedicalEncyclopedia y devuelve el ID generado"""
     with conn.cursor() as cursor:
@@ -259,92 +313,35 @@ def insert_or_get_encyclopedia_data(conn, data):
             conn.commit()
             return encyclopedia_id
 
-def insert_body_part_data(conn, encyclopedia_id, body):
-    """Inserta los atributos relacionados con una enciclopedia"""
-    with conn.cursor() as cursor:
-        query = """
-        INSERT INTO MedicalEncyclopediaBodyPartPlane (
-            EncyclopediaId, BodyPartId, BodyPlaneId
-        ) VALUES (?, ?, ?);
-        """
-        print(f"INSERT INTO MedicalEncyclopediaBodyPartPlane ()...")
-        cursor.execute(query,(encyclopedia_id, body["BodyPartId"], body["BodyPlaneId"]))
-        conn.commit()
-
-def update_or_insert_attributes(conn, encyclopedia_id, attributes):
+def insert_attributes(conn, encyclopedia_id, attributes):
     """Inserta ó actualiza los atributos relacionados con una enciclopedia"""
     if len(attributes) > 0:
-        # Define el patrón de búsqueda
-        pattern = r'<p class="h5">(.*?)</p>'
-        # Process Entries Terms
-        attr_new = set()
-        attr_updt = set()
         with conn.cursor() as cursor:
-            for attrbt in attributes:
-                matches = re.findall(pattern, attrbt["HTMLContent"], re.DOTALL)
-                if matches:
-                    str_html_like = ""
-                    for match in matches:
-                        if str_html_like:
-                            str_html_like = f"{str_html_like}%{match}"
-                        else:
-                            str_html_like = f"{match}"
-                    if str_html_like:
-                        # Check if exists
-                        query_select = """
-                        SELECT AttributeGroupId FROM MedicalEncyclopediaAttribute
-                        WHERE EncyclopediaId = ? AND HTMLContent LIKE '%?%';
-                        """
-                        cursor.execute(
-                            query_select, 
-                            (encyclopedia_id, str_html_like)
-                        )
-                        row = cursor.fetchone()
-                        if row:
-                            attrbt["AttributeGroupId"] = row[0]
-                            attr_updt.add(attrbt)
-                        else:
-                            attr_new.add(attrbt)
-            list_updt = list(attr_updt)
-            if len(list_updt) > 0:
-                for attr_upd in attributes:
-                    query_update = """
-                    UPDATE MedicalEncyclopediaAttribute
-                    SET Content = ?, HTMLContent = ?
-                    WHERE EncyclopediaId = ? AND AttributeGroupId = ?;
-                    """
-                    print(f"UPDATE MedicalEncyclopediaAttribute ()...")
-                    cursor.execute(
-                            query_update, 
-                            (encyclopedia_id, attr_upd["AttributeGroupId"])
-                    )
-                    conn.commit()
-            list_new = list(attr_new)
-            if len(list_new) > 0:
-                    query = """
-                    INSERT INTO MedicalEncyclopediaAttribute (
-                        AttributeGroupId, EncyclopediaId, Content, HTMLContent
-                    ) VALUES (?, ?, ?, ?);
-                    """
-                    # Preparar todos los valores para ejecutarlos en un solo execute_many
-                    values = [
-                        (
-                            attr["AttributeGroupId"],
-                            encyclopedia_id,
-                            attr["Content"],
-                            attr["HTMLContent"]
-                        ) 
-                        for attr in list_new
-                    ]
-                    print(f"Values: {values}")
-                    print(f"INSERT INTO MedicalEncyclopediaAttribute ()...")
-                    cursor.executemany(query, values)
-                    conn.commit()
+            query = """
+            INSERT INTO MedicalEncyclopediaAttribute (
+                AttributeGroupId, EncyclopediaId, Content, HTMLContent
+            ) VALUES (?, ?, ?, ?);
+            """
+            # Preparar todos los valores para ejecutarlos en un solo execute_many
+            values = [
+                (
+                    attr["AttributeGroupId"],
+                    encyclopedia_id,
+                    attr["Content"],
+                    attr["HTMLContent"]
+                )
+                for attr in attributes
+            ]
+            print(f"Values: {values}")
+            print(f"INSERT INTO MedicalEncyclopediaAttribute ()...")
+            cursor.executemany(query, values)
+            conn.commit()
 
 def insert_or_get_term(conn, data):
     """Inserta un término si no existe o devuelve el ID existente"""
     with conn.cursor() as cursor:
         # Check if term exists
+        print(f"NormalizedTerm: {data["NormalizedTerm"]}")
         cursor.execute(
             "SELECT TermId FROM MedicalTerm WHERE NormalizedTerm = ?", 
             data["NormalizedTerm"]
@@ -354,16 +351,16 @@ def insert_or_get_term(conn, data):
             return row[0]
         else:
             query = """
-            INSERT INTO MedicalTerm (Term, NormalizedTerm) OUTPUT INSERTED.TermId VALUES (?, ?);
+            INSERT INTO MedicalTerm (Term) OUTPUT INSERTED.TermId VALUES (?);
             """
             print(f"data: {data}")
-            print(f"INSERT INTO MedicalTerm ()...")
-            cursor.execute(query, (data["Term"], data["NormalizedTerm"]))
+            print(f"INSERT INTO MedicalTerm ({data["Term"]})...")
+            cursor.execute(query, (data["Term"]))
             term_id = cursor.fetchone()[0]
             conn.commit()
             return term_id
 
-def insert_medical_entry_term(conn, indx, et_type_id, data):
+def insert_medical_entry_term(conn, encycl_id, et_type_id, data):
     """Inserta un término si no existe o devuelve el ID existente"""
     print(f"data: {data}")
     with conn.cursor() as cursor:
@@ -372,10 +369,10 @@ def insert_medical_entry_term(conn, indx, et_type_id, data):
             TermId, EntryTermId, EntryTermTypeId, IsPrimary
         ) VALUES (?, ?, ?, ?);
         """
-        print(f"INSERT INTO MedicalEntryTerm (...) VALUES({data["TermId"]}, {indx}, {et_type_id}, {data["IsPrimary"]})")
+        print(f"INSERT INTO MedicalEntryTerm (...) VALUES({encycl_id}, {data["TermId"]}, {et_type_id}, {data["IsPrimary"]})")
         cursor.execute(
             query_met,
-            (data["TermId"], indx, et_type_id, data["IsPrimary"])
+            (encycl_id, data["TermId"], et_type_id, data["IsPrimary"])
         )
         conn.commit()
         return
@@ -386,14 +383,12 @@ def insert_entries_terms_data(conn, encyclopedia_id, entries_terms):
         with conn.cursor() as cursor:
             # First process MedicalTerm and get all TermIds
             term_ids = set()
-            map_term_ids = {}
             for count, term in enumerate(entries_terms):
                 term_id = insert_or_get_term(conn, term)
                 term["TermId"] = term_id
                 entries_terms[count] = term
                 print(f"term_ids.add({term_id})...")
                 term_ids.add(term_id)
-                map_term_ids[term["NormalizedTerm"]] = term_id
             
             # Then process MedicalEncyclopediaTerm, the first term is the main term (Father)
             main_term = entries_terms[0]
@@ -409,58 +404,86 @@ def insert_entries_terms_data(conn, encyclopedia_id, entries_terms):
             else:
                 print(f"Error in insert_or_get_term!!!")
             # Finally process MedicalEntryTerm
-            #ids_list = list(term_ids)
+            ids_list = list(term_ids)
             cat_et_type = gt_cat_entry_term_type(conn)
             for count, et_data in enumerate(entries_terms):
                 if count > 0:
                     et_type_id = cat_et_type.get(et_data["TermType"])
                     if et_type_id:
                         print(f"et_type_id: {et_type_id}")
-                        insert_medical_entry_term(conn, count+1, et_type_id, et_data)
+                        insert_medical_entry_term(conn, ids_list[0], et_type_id, et_data)
                     else:
                         print(f"Error al recuperar get_entry_term_type_id!!!")
+# ========== DB SECELT, INSERT FUNCIONS ==========
 
-# === EJECUCIÓN PRINCIPAL ===
-if __name__ == "__main__":
-    if not os.path.exists(input_file):
-        raise FileNotFoundError(f"El archivo {input_file} no existe. Verifica la ruta.")
-    
-    # Extract data from HTML
-    data = extract_data_from_html_local(input_file)
-    
-    # Connect to database and insert data
+def process_html_file(html_content):
+    """Procesa un archivo HTML y lo inserta en la BD"""
+    print(f"get_db_connection()...")
+    conn = get_db_connection()
     try:
-        conn = get_db_connection()
+        # Inicializar Catalogos
+        gt_cat_medical_attribute(conn)
         
-        # Insert Encyclopedia data and get the generated ID
-        encyclopedia_id = insert_or_get_encyclopedia_data(conn, data)
-        print(f"Inserted Encyclopedia with ID: {encyclopedia_id}")
+        # Extraer datos del HTML
+        data = extract_data_from_html_local(html_content)
         
-        # Insert BodyPart
-        #insert_body_part_data(conn, encyclopedia_id, data["MedicalEncyclopediaBodyPartPlane"])
-        #print("Inserted BodyPart successfully")
+        encyclopedia_id = get_encyclopedia_data(conn, data)
+        if encyclopedia_id:
+            print(f"Se encontraron datos existentes para EncyclopediaId: {encyclopedia_id}")
+        else:
+            # Insert Encyclopedia data and get the generated ID
+            encyclopedia_id = insert_or_get_encyclopedia_data(conn, data)
+            print(f"Inserted Encyclopedia with ID: {encyclopedia_id}")
 
-        # Insert Attributes
-        if data["MedicalEncyclopediaAttribute"]:
-            update_or_insert_attributes(conn, encyclopedia_id, data["MedicalEncyclopediaAttribute"])
-            print("Inserted Attributes successfully")
-        
-        # Insert MedicalTerms and relationships
-        if data["MedicalEntriesTerms"]:
-            insert_entries_terms_data(conn, encyclopedia_id, data["MedicalEntriesTerms"])
-            print("Inserted MedicalTerms and relationships successfully")
-        
+            # Insert Attributes
+            if data["MedicalEncyclopediaAttribute"]:
+                insert_attributes(conn, encyclopedia_id, data["MedicalEncyclopediaAttribute"])
+                print("Inserted Attributes successfully")
+            
+            # Insert MedicalTerms and relationships
+            if data["MedicalEntriesTerms"]:
+                insert_entries_terms_data(conn, encyclopedia_id, data["MedicalEntriesTerms"])
+                print("Inserted MedicalTerms and relationships successfully")
+
+            print(f"Datos insertados correctamente. EncyclopediaId: {encyclopedia_id}")
     except Exception as e:
-        print(f"Error: {str(e)}")
-        if 'conn' in locals() and conn is not None:
-            try:
-                conn.rollback()
-                print("Se realizó rollback...")
-            except Exception as rollback_error:
-                print(f"Error al hacer rollback: {rollback_error}")
+        conn.rollback()
+        print(f"Error al procesar archivo: {e}")
     finally:
-        if 'conn' in locals():
-            conn.close()
-            print("Se cerró la conexion correctamente.")
-    
-    print("✅ Proceso completado")
+        conn.close()
+
+def list_html_files_from_s3(bucket_name, prefix):
+    """Lista archivos HTML desde un prefijo en S3"""
+    paginator = s3_client.get_paginator("list_objects_v2")
+    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
+        for obj in page.get("Contents", []):
+            key = obj["Key"]
+            if key.endswith(".html"):
+                yield key
+
+def read_html_from_s3(bucket_name, key):
+    """Lee el contenido de un archivo HTML desde S3"""
+    response = s3_client.get_object(Bucket=bucket_name, Key=key)
+    return response["Body"].read().decode("utf-8")
+
+def move_file_to_processed(bucket_name, key):
+    """Mueve archivo procesado a la carpeta 'processed/'"""
+    destination_key = f"processed/{os.path.basename(key)}"
+    s3_client.copy_object(
+        Bucket=bucket_name,
+        CopySource={"Bucket": bucket_name, "Key": key},
+        Key=destination_key
+    )
+    s3_client.delete_object(Bucket=bucket_name, Key=key)
+    print(f"Archivo movido a: {destination_key}")
+
+if __name__ == "__main__":
+    try:
+        print(f"Procesando archivos desde S3: s3://{S3_CONFIG['bucket_name']}/{S3_CONFIG['s3_key']}")
+        for html_key in list_html_files_from_s3(S3_CONFIG["bucket_name"], S3_CONFIG["s3_key"]):
+            print(f"Procesando archivo: {html_key}")
+            html_content = read_html_from_s3(S3_CONFIG["bucket_name"], html_key)
+            process_html_file(html_content)
+            move_file_to_processed(S3_CONFIG["bucket_name"], html_key)
+    except Exception as e:
+        print(f"Error en el procesamiento de archivos S3: {e}")

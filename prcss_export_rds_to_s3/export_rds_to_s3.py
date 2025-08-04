@@ -1,15 +1,20 @@
 # Ejemplo de extraccion y conversion a JSON (Python)
-import pyodbc
 import boto3
 import json
 import os
+import pyodbc
+import configparser
 
 # === CONFIGURACIÓN ===
+current_dir = os.path.dirname(os.path.abspath(__file__))
+config = configparser.ConfigParser()
+config.read(os.path.join(current_dir, '..', 'config.ini'))
+
 RDS_CONFIG = {
-    "server": "plm-rds-desarrollopreproductivo.co6eawhyglix.us-east-1.rds.amazonaws.com",
-    "database": "ZMedinet_Pruebas",
-    "username": "marco.tlachino",
-    "password": "Temporal1234*",
+    "server": config["database"]["server"],
+    "database": config["database"]["database"],
+    "username": config["database"]["username"],
+    "password": config["database"]["password"]
 }
 
 S3_CONFIG = {

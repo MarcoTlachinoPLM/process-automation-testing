@@ -2,6 +2,7 @@
 # http://git-scm.com/docs/gitignore
 *~
 *.zip
+config.ini
 aws_pyodbc_layer/python
 aws_pyodbc_layer/*.zip
 docker-pyodbc-layer-v1/python

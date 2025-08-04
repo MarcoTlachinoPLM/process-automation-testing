@@ -2,6 +2,7 @@
 import os
 import re
 import boto3
+import configparser
 from bs4 import BeautifulSoup
 import pyodbc
 from datetime import datetime
@@ -13,11 +14,15 @@ S3_CONFIG = {
 }
 
 # Configuración de la base de datos SQL Server
+current_dir = os.path.dirname(os.path.abspath(__file__))
+config = configparser.ConfigParser()
+config.read(os.path.join(current_dir, '..', 'config.ini'))
+
 DB_CONFIG = {
-    "server": "plm-rds-desarrollopreproductivo.co6eawhyglix.us-east-1.rds.amazonaws.com",
-    "database": "ZMedinet_Pruebas",
-    "username": "marco.tlachino",
-    "password": "Temporal1234*"
+    "server": config["database"]["server"],
+    "database": config["database"]["database"],
+    "username": config["database"]["username"],
+    "password": config["database"]["password"]
 }
 
 def get_db_connection():
