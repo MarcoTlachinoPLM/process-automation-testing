@@ -11,6 +11,7 @@ config = configparser.ConfigParser()
 config.read(os.path.join(current_dir, '..', 'config.ini'))
 path_files = 'data_import_files'
 path_move = 'data_processed_files'
+path_error_move = 'data_error_files'
 
 DB_CONFIG = {
     "server": config["database"]["server"],
@@ -269,6 +270,7 @@ def extract_data_from_html_local(html_content):
     # Combine all terms
     result["MedicalEntriesTerms"] = medical_term
     
+    attributes_not_found = set()
     # More Attributes
     rubroenc = map_encyclopedia_tags.get("HTMLContent")
     rub_enc = soup.find_all("p", class_=rubroenc)
@@ -293,6 +295,10 @@ def extract_data_from_html_local(html_content):
             else:
                 #TODO: Validar si hay que agregarlo, o se debe crear antes en el catalogo...
                 print(f"New label: {label}")
+                attributes_not_found.add(label)
+    list_not_found = list(attributes_not_found)
+    if len(list_not_found) > 0:
+        raise CustomException(f"Uno o varios atributos aun no estan dados de alta:{list_not_found}")
 
     result["MedicalEncyclopediaAttribute"] = list(attributes)
     
