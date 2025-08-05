@@ -91,17 +91,21 @@ pip list
 
 pip install pyodbc boto3 beautifulsoup4
 
+pip install --upgrade pip
+
 2. Ejecutar prueba.
 
 python trnsfrm_html_to_json.py
 
-python import_html_to_rds_v1.py
+python prcss_import_s3_to_rds/import_html_to_rds_v1.py
 
 python import_html_to_rds_v2.py
 
-python import_s3_to_rds_v1.py
+python import_s3_to_rds.py
 
-python import_s3_to_rds_v2.py
+python prcss_import_s3_to_rds/import_files_to_rds.py
+
+python prcss_import_s3_to_rds/import_files_to_rds_logs.py
 
 ###  End Proof Concept Import S3 to RDS  ###
 

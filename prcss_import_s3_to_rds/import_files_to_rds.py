@@ -1,23 +1,17 @@
 import os
 import re
-import boto3
 import pyodbc
 import configparser
 from bs4 import BeautifulSoup
 from datetime import datetime
 
-# Configuración de AWS S3
-S3_CONFIG = {
-    "bucket_name": "opensearch-dev",
-    "s3_key": "test_files/"
-}
-
-s3_client = boto3.client("s3")
-
 # Configuración de la base de datos SQL Server
 current_dir = os.path.dirname(os.path.abspath(__file__))
 config = configparser.ConfigParser()
 config.read(os.path.join(current_dir, '..', 'config.ini'))
+path_files = 'data_import_files'
+path_move = 'data_processed_files'
+path_error_move = 'data_error_files'
 
 DB_CONFIG = {
     "server": config["database"]["server"],
@@ -38,7 +32,9 @@ def get_db_connection():
     return pyodbc.connect(conn_str)
 
 # Mapeo de grupos de atributos
-rubroenc_map = {}
+main_mdcl_attr_grp = {}
+
+fltrd_mdcl_attr_grp = {}
 
 entry_term_type = {
     "Sinónimos": "Synonym",
@@ -49,6 +45,17 @@ cat_term_type = {
     "Sinónimos": "Sinonimos",
     "Palabras clave": "PalabrasClave"
 }
+
+map_encyclopedia_tags = {
+    "EncyclopediaName": "title",
+    "PLMCode": "Codigo",
+    "Descripción": "RubroMaestro",
+    "Attributes": "RubroMaestro",
+    "HTMLContent": "rubroenc"
+}
+
+class CustomException(Exception):
+    pass
 
 # ===== DATABASE CONNECTION =====
 def get_db_connection():
@@ -75,22 +82,39 @@ def gt_cat_entry_term_type(conn):
             cat_et_type[nombre_value] = id_value
         return cat_et_type
 
-def gt_cat_medical_attribute(conn):
+def gt_main_medical_attribute(conn):
     """Recupera diccionario para MedicalAttributeGroup."""
     with conn.cursor() as cursor:
-        cursor.execute("SELECT AttributeGroupId, AttributeGroupName FROM MedicalAttributeGroup;")
+        cursor.execute("SELECT AttributeGroupId, AttributeGroupName FROM MedicalAttributeGroup WHERE AttributeGroupName IN ('Descripción', 'Sinónimos', 'Palabras clave');")
         for row in cursor.fetchall():
             id_value = row[0]
             nombre_value = row[1]
-            rubroenc_map[nombre_value] = id_value
+            main_mdcl_attr_grp[nombre_value] = id_value
+        return True
+
+def gt_fltrd_medical_attribute(conn):
+    """Recupera diccionario para MedicalAttributeGroup."""
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT AttributeGroupId, AttributeGroupName FROM MedicalAttributeGroup WHERE AttributeGroupName NOT IN ('Descripción', 'Sinónimos', 'Palabras clave');")
+        for row in cursor.fetchall():
+            id_value = row[0]
+            nombre_value = row[1]
+            fltrd_mdcl_attr_grp[nombre_value] = id_value
         return True
 # ======= DB GET CATALOGS =======
 
-def get_medical_attribute(label):
+def get_medical_attribute_main(label):
     lower_label = label.lower()
-    for key in rubroenc_map:
-        if key.lower() in lower_label:
-            return rubroenc_map[key]
+    for attr in main_mdcl_attr_grp:
+        if attr.lower() in lower_label:
+            return main_mdcl_attr_grp[attr]
+    return None
+
+def get_medical_attribute_fltrd(label):
+    lower_label = label.lower()
+    for attr in fltrd_mdcl_attr_grp:
+        if attr.lower() in lower_label:
+            return fltrd_mdcl_attr_grp[attr]
     return None
 
 def get_entryterm_type(label):
@@ -106,6 +130,15 @@ def get_entryterm_class(label):
         if key.lower() in lower_label:
             return cat_term_type[key]
     return None
+
+def html_to_text(html_text):
+    # Hacer una copia para no modificar el original
+    tmp_copy = BeautifulSoup(str(html_text), 'html.parser')
+    # Obtener todo el texto
+    text = tmp_copy.get_text(separator=' ', strip=True)
+    # Limpiar espacios múltiples y saltos de línea
+    text = ' '.join(text.split())
+    return text
 
 # ========== EXTRACCION DE DATOS ==========
 def extract_data_from_html_local(html_content):
@@ -127,24 +160,35 @@ def extract_data_from_html_local(html_content):
     }
     
     # Título
-    title_tag = soup.find("title")
-    result["EncyclopediaName"] = title_tag.get_text(strip=True) if title_tag else ""
+    #title_tag = soup.find(map_encyclopedia_tags.get("EncyclopediaName"))
+    #result["EncyclopediaName"] = title_tag.get_text(strip=True) if title_tag else ""
     
     # PLMCode
     fthr_term = ""
-    codigo_span = soup.find("span", class_="Codigo")
-    if codigo_span:
-        full_text = codigo_span.get_text(strip=True)
-        match = re.match(r'(.+?)\s*\[(.+?)\]', full_text)
-        if match:
-            fthr_term = match.group(1)
-            codigo = match.group(2)
-            result["PLMCode"] = codigo
-            print(f"Father Term: {fthr_term}, Código: {codigo}")
+    main_tag = soup.find("p", class_="h1")
+    if main_tag:
+        tago_codigo = map_encyclopedia_tags.get("PLMCode")
+        codigo_span = main_tag.find("span", class_=tago_codigo)
+        if codigo_span:
+            full_text = codigo_span.get_text(strip=True)
+            match = re.match(r'(.+?)\s*\[(.+?)\]', full_text)
+            if match:
+                fthr_term = match.group(1)
+                codigo = match.group(2)
+                result["PLMCode"] = codigo
+                #print(f"Father Term: {fthr_term}, Código: {codigo}")
+            else:
+                raise CustomException("No se encontró el patrón esperado en el texto")
         else:
-            print("No se encontró el patrón esperado en el texto")
+            raise CustomException("No se encontró span con class='Codigo' dentro de <p class='h1'>")
+    else:
+        raise CustomException("No se encontró elemento <p class='h1'> que contiene el código PLM")
     
-    # Extraer el ID del elemento <body>
+    # Set Title from Father Term
+    result["EncyclopediaName"] = fthr_term
+    
+    # TODO: Extraer el ID del elemento <body>
+    """
     body_tag = soup.find('body')
     if body_tag:
         body_id = body_tag.get('id')
@@ -155,15 +199,17 @@ def extract_data_from_html_local(html_content):
     if body_id and div_id:
         print(f"body_id: {body_id}, div_id: {div_id}")
         result["MedicalEncyclopediaBodyPartPlane"] = {"BodyPartId": body_id, "BodyPlaneId": div_id}
-    
+    """
     # Descripción principal como HTML
-    desc_rubro = soup.find("p", class_="RubroMaestro", string=lambda t: t and "Descripción" in t)
+    tag_master = map_encyclopedia_tags.get("Descripción")
+    #print(f"tag_master: {tag_master}")
+    desc_rubro = soup.find("p", class_=tag_master, string=lambda t: t and "Descripción" in t)
     if desc_rubro:
+        #print(f"desc_rubro: {desc_rubro}")
         desc_normal = desc_rubro.find_next_sibling("p", class_="Normal")
         if desc_normal:
-            print(f"desc_normal: {desc_normal}")
+            desc_normal = html_to_text(desc_normal)
             result["Description"] = str(desc_normal)
-    
     # ========== MedicalEncyclopediaAttribute ==========
     
     # Process Entries Terms
@@ -173,23 +219,45 @@ def extract_data_from_html_local(html_content):
     added_mdcl.add(fthr_term)
     
     # RubroMaestro detail
-    rub_master = soup.find_all("p", class_="RubroMaestro")
+    tag_attr = map_encyclopedia_tags.get("Attributes")
+    rub_master = soup.find_all("p", class_=tag_attr)
+    # Process Attributes
+    attributes = []
     for tag in rub_master:
         label = tag.get_text(strip=True).replace(":", "")
+        html_content = ''
+        pointer = tag.find_next_sibling("p", class_="Normal")
+        while pointer and not (
+            pointer.name == 'p' and pointer.get('class') in [['hr'], [tag_master]]
+        ):
+            html_content += str(pointer)
+            pointer = pointer.find_next_sibling()
+        if html_content:
+            #print(f"html_content: {html_content}")
+            attribute_id = get_medical_attribute_main(label)
+            #print(f"attribute_id: {attribute_id}, label: {label}")
+            if attribute_id:
+                attributes.append({
+                    "AttributeGroupId": attribute_id,
+                    "Content": "",
+                    "HTMLContent": html_content.strip()
+                })
+        #print(f"get_entryterm_type()...")
         et_type_str = get_entryterm_type(label)
         if et_type_str:
+            #print(f"et_type_str: {et_type_str}")
             tbl = str.maketrans("áéíóú", "aeiou")
             str_lbl = label.translate(tbl)
-            print(f"label: {label}, str_lbl: {str_lbl}")
+            #print(f"label: {label}, str_lbl: {str_lbl}")
             str_class = get_entryterm_class(label)
-            print(f"str_class: {str_class}")
+            #print(f"str_class: {str_class}")
             terms_span = soup.find('span', class_=str_class)
-            print(f"terms_span: {terms_span}")
+            #print(f"terms_span: {terms_span}")
             extrctd_txt = terms_span.get_text(strip=True)
             labels = [s.strip() for s in extrctd_txt.split('|')]
             for strp_lbl in labels:
                 if strp_lbl not in added_mdcl:
-                    print(f"et_type_str: {et_type_str}, strp_lbl: {strp_lbl}")
+                    #print(f"et_type_str: {et_type_str}, strp_lbl: {strp_lbl}")
                     # Estructura para MedicalTerm [Term, NormalizedTerm]
                     medical_term.append({
                         "Term": strp_lbl,
@@ -202,19 +270,19 @@ def extract_data_from_html_local(html_content):
     # Combine all terms
     result["MedicalEntriesTerms"] = medical_term
     
-    # Process Attributes
-    attributes = []
-    rub_enc = soup.find_all("p", class_="rubroenc")
+    # More Attributes
+    rubroenc = map_encyclopedia_tags.get("HTMLContent")
+    rub_enc = soup.find_all("p", class_=rubroenc)
     for tag in rub_enc:
         span = tag.find("span", class_="h2")
         if span:
             label = span.get_text(strip=True).replace(":", "")
-            attribute_id = get_medical_attribute(label)
+            attribute_id = get_medical_attribute_fltrd(label)
             if attribute_id:
                 html_content = ''
                 pointer = tag.find_next_sibling()
                 while pointer and not (
-                    pointer.name == 'p' and pointer.get('class') in [['hr'], ['rubroenc']]
+                    pointer.name == 'p' and pointer.get('class') in [['hr'], [rubroenc]]
                 ):
                     html_content += str(pointer)
                     pointer = pointer.find_next_sibling()
@@ -227,7 +295,7 @@ def extract_data_from_html_local(html_content):
                 #TODO: Validar si hay que agregarlo, o se debe crear antes en el catalogo...
                 print(f"New label: {label}")
 
-    result["MedicalEncyclopediaAttribute"] = attributes
+    result["MedicalEncyclopediaAttribute"] = list(attributes)
     
     return result
 # ========== EXTRACCION DE DATOS ==========
@@ -269,7 +337,7 @@ def insert_attributes(conn, encyclopedia_id, attributes):
                 )
                 for attr in attributes
             ]
-            print(f"Values: {values}")
+            #print(f"Values: {values}")
             print(f"INSERT INTO MedicalEncyclopediaAttribute ()...")
             cursor.executemany(query, values)
             conn.commit()
@@ -332,7 +400,7 @@ def insert_attributes(conn, encyclopedia_id, attributes):
                 )
                 for attr in attributes
             ]
-            print(f"Values: {values}")
+            #print(f"Values: {values}")
             print(f"INSERT INTO MedicalEncyclopediaAttribute ()...")
             cursor.executemany(query, values)
             conn.commit()
@@ -341,7 +409,7 @@ def insert_or_get_term(conn, data):
     """Inserta un término si no existe o devuelve el ID existente"""
     with conn.cursor() as cursor:
         # Check if term exists
-        print(f"NormalizedTerm: {data["NormalizedTerm"]}")
+        #print(f"NormalizedTerm: {data["NormalizedTerm"]}")
         cursor.execute(
             "SELECT TermId FROM MedicalTerm WHERE NormalizedTerm = ?", 
             data["NormalizedTerm"]
@@ -353,7 +421,7 @@ def insert_or_get_term(conn, data):
             query = """
             INSERT INTO MedicalTerm (Term) OUTPUT INSERTED.TermId VALUES (?);
             """
-            print(f"data: {data}")
+            #print(f"data: {data}")
             print(f"INSERT INTO MedicalTerm ({data["Term"]})...")
             cursor.execute(query, (data["Term"]))
             term_id = cursor.fetchone()[0]
@@ -362,7 +430,7 @@ def insert_or_get_term(conn, data):
 
 def insert_medical_entry_term(conn, encycl_id, et_type_id, data):
     """Inserta un término si no existe o devuelve el ID existente"""
-    print(f"data: {data}")
+    #print(f"data: {data}")
     with conn.cursor() as cursor:
         query_met = """
         INSERT INTO MedicalEntryTerm (
@@ -387,13 +455,13 @@ def insert_entries_terms_data(conn, encyclopedia_id, entries_terms):
                 term_id = insert_or_get_term(conn, term)
                 term["TermId"] = term_id
                 entries_terms[count] = term
-                print(f"term_ids.add({term_id})...")
+                #print(f"term_ids.add({term_id})...")
                 term_ids.add(term_id)
             
             # Then process MedicalEncyclopediaTerm, the first term is the main term (Father)
             main_term = entries_terms[0]
             main_id = main_term["TermId"]
-            print(f"term_ids: {term_ids}")
+            #print(f"term_ids: {term_ids}")
             if main_id in term_ids:
                 print(f"INSERT INTO MedicalEncyclopediaTerm ()...")
                 cursor.execute(
@@ -406,12 +474,18 @@ def insert_entries_terms_data(conn, encyclopedia_id, entries_terms):
             # Finally process MedicalEntryTerm
             ids_list = list(term_ids)
             cat_et_type = gt_cat_entry_term_type(conn)
+            ent_trms_ids = set()
             for count, et_data in enumerate(entries_terms):
                 if count > 0:
                     et_type_id = cat_et_type.get(et_data["TermType"])
                     if et_type_id:
-                        print(f"et_type_id: {et_type_id}")
-                        insert_medical_entry_term(conn, ids_list[0], et_type_id, et_data)
+                        at_id = f"{ids_list[0]}-{et_data["TermId"]}"
+                        if at_id not in ent_trms_ids:
+                            #print(f"ent_trms_ids.add({at_id})")
+                            ent_trms_ids.add(at_id)
+                            insert_medical_entry_term(conn, ids_list[0], et_type_id, et_data)
+                        else:
+                            print(f"et_type_id: {et_type_id}")
                     else:
                         print(f"Error al recuperar get_entry_term_type_id!!!")
 # ========== DB SECELT, INSERT FUNCIONS ==========
@@ -420,9 +494,11 @@ def process_html_file(html_content):
     """Procesa un archivo HTML y lo inserta en la BD"""
     print(f"get_db_connection()...")
     conn = get_db_connection()
+    complete = False
     try:
         # Inicializar Catalogos
-        gt_cat_medical_attribute(conn)
+        gt_main_medical_attribute(conn)
+        gt_fltrd_medical_attribute(conn)
         
         # Extraer datos del HTML
         data = extract_data_from_html_local(html_content)
@@ -445,45 +521,48 @@ def process_html_file(html_content):
                 insert_entries_terms_data(conn, encyclopedia_id, data["MedicalEntriesTerms"])
                 print("Inserted MedicalTerms and relationships successfully")
 
+            complete = True
             print(f"Datos insertados correctamente. EncyclopediaId: {encyclopedia_id}")
     except Exception as e:
         conn.rollback()
         print(f"Error al procesar archivo: {e}")
     finally:
         conn.close()
+        return complete
 
-def list_html_files_from_s3(bucket_name, prefix):
-    """Lista archivos HTML desde un prefijo en S3"""
-    paginator = s3_client.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
-        for obj in page.get("Contents", []):
-            key = obj["Key"]
-            if key.endswith(".html"):
-                yield key
+def list_html_files_local(directory):
+    """Lista archivos HTML en un directorio local"""
+    for filename in os.listdir(directory):
+        if filename.endswith(".html"):
+            yield os.path.join(directory, filename)
 
-def read_html_from_s3(bucket_name, key):
-    """Lee el contenido de un archivo HTML desde S3"""
-    response = s3_client.get_object(Bucket=bucket_name, Key=key)
-    return response["Body"].read().decode("utf-8")
+def read_html_file(filepath):
+    """Lee el contenido de un archivo HTML local"""
+    with open(filepath, 'r', encoding='utf-8') as file:
+        return file.read()
 
-def move_file_to_processed(bucket_name, key):
-    """Mueve archivo procesado a la carpeta 'processed/'"""
-    destination_key = f"processed/{os.path.basename(key)}"
-    s3_client.copy_object(
-        Bucket=bucket_name,
-        CopySource={"Bucket": bucket_name, "Key": key},
-        Key=destination_key
-    )
-    s3_client.delete_object(Bucket=bucket_name, Key=key)
-    print(f"Archivo movido a: {destination_key}")
+def move_file_to_processed(filepath, movepath):
+    """Mueve archivo procesado a la carpeta 'processed'"""
+    processed_dir = os.path.join(current_dir, '..', movepath)
+    if not os.path.exists(processed_dir):
+        os.makedirs(processed_dir)
+    
+    filename = os.path.basename(filepath)
+    destination = os.path.join(processed_dir, filename)
+    os.rename(filepath, destination)
+    print(f"Archivo movido a: {destination}")
 
 if __name__ == "__main__":
     try:
-        print(f"Procesando archivos desde S3: s3://{S3_CONFIG['bucket_name']}/{S3_CONFIG['s3_key']}")
-        for html_key in list_html_files_from_s3(S3_CONFIG["bucket_name"], S3_CONFIG["s3_key"]):
-            print(f"Procesando archivo: {html_key}")
-            html_content = read_html_from_s3(S3_CONFIG["bucket_name"], html_key)
-            process_html_file(html_content)
-            move_file_to_processed(S3_CONFIG["bucket_name"], html_key)
+        input_dir = os.path.join(current_dir, '..', path_files)
+        
+        print(f"Procesando archivos desde directorio local: {input_dir}")
+        for html_file in list_html_files_local(input_dir):
+            print(f"Procesando archivo: {html_file}")
+            html_content = read_html_file(html_file)
+            if process_html_file(html_content):
+                move_file_to_processed(html_file, path_move)
+            else:
+                move_file_to_processed(html_file, path_error_move)
     except Exception as e:
-        print(f"Error en el procesamiento de archivos S3: {e}")
+        print(f"Error en el procesamiento de archivos locales: {e}")
