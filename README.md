@@ -105,9 +105,40 @@ python import_s3_to_rds.py
 
 python prcss_import_s3_to_rds/import_files_to_rds.py
 
-python prcss_import_s3_to_rds/import_files_to_rds_logs.py
-
 ###  End Proof Concept Import S3 to RDS  ###
+
+
+
+####  Proof Concept Import CSV to RDS  ###
+1. Instale las bibliotecas externas en un nuevo directorio package.
+
+cd prcss_import_csv_to_rds
+
+# 1.1 Crear un entorno virtual
+
+rm -rf venv
+
+python3 -m venv venv
+
+# 1.2 Activar el entorno virtual
+
+source venv/bin/activate
+
+which pip
+
+pip list
+
+pip install pyodbc boto3 pandas beautifulsoup4
+
+pip install --upgrade pip
+
+2. Ejecutar prueba.
+
+python prcss_import_csv_to_rds/import_csv_to_rds_v1.py
+
+python prcss_import_csv_to_rds/import_csv_to_rds_v2.py
+
+###  End Proof Concept Import CSV to RDS  ###
 
 
 
